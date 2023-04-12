@@ -12,9 +12,9 @@ ROLE_IDS = {
     "art": 1068426860964347904
 }
 
+
 class BDTools(commands.Cog):
     """Tools used within the Ballsdex server"""
-
 
     def __init__(self, bot: Red):
         self.bot = bot
@@ -38,7 +38,7 @@ class BDTools(commands.Cog):
             return
         await ctx.channel.edit(locked=True, archived=True, reason=reason)
         await ctx.send("Topic has been closed.")
-    
+
     @commands.mod()
     @commands.command()
     async def lock(self, ctx: commands.Context, *, reason: str):
@@ -53,7 +53,7 @@ class BDTools(commands.Cog):
     @commands.command(usage="<type> <user>")
     async def blacklist(self, ctx: commands.Context, _type: str, user: discord.Member):
         """Blacklist a user from various parts of the bot.
-        
+
 
         Valid types:
             -   Ticket - Blacklist a user from tickets.
