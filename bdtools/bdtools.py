@@ -15,12 +15,12 @@ ROLE_IDS = {
 
 
 class BlacklistChoices(enum.Enum):
-    ticket = 1059622470677704754
-    boss = 1054624927879266404
-    forum = 1055747502726447184
-    reactions = 1052727000369995938
-    ads = 1059931415069863976
-    art = 1068426860964347904
+    ticket = 0
+    boss = 1
+    forum = 2
+    reactions = 3
+    ads = 4
+    art = 5
 
 
 class BDTools(commands.Cog):
@@ -95,7 +95,7 @@ class BDTools(commands.Cog):
             The type of blacklist to add a member to.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
-        role = interaction.guild.get_role(blacklist_type.value)
+        role = interaction.guild.get_role(ROLE_IDS[blacklist_type.name])
         if type(role) is None:
             return await interaction.followup.send("Role not found. Please notify the proper people.")
         await member.add_roles(role)
