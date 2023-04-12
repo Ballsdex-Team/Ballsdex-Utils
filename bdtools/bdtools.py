@@ -48,11 +48,11 @@ class BDTools(commands.Cog):
         if not isinstance(ctx.channel, discord.Thread):
             await ctx.send("This channel is not a thread or forum post.")
             return
+        await ctx.send("Topic has been closed.")
         if reason is not None:
             await ctx.channel.edit(locked=True, archived=True, reason=reason)
         else:
             await ctx.channel.edit(locked=True, archived=True)
-        await ctx.send("Topic has been closed.")
 
     @commands.mod()
     @commands.command()
@@ -61,11 +61,11 @@ class BDTools(commands.Cog):
         if not isinstance(ctx.channel, discord.Thread):
             await ctx.send("This channel is not a thread or forum post.")
             return
+        await ctx.send("Topic has been locked.")
         if reason is not None:
             await ctx.channel.edit(locked=True, reason=reason)
         else:
             await ctx.channel.edit(locked=True)
-        await ctx.send("Topic has been locked.")
 
     @app_commands.command(name="blacklist", description="Blacklist a member from various parts of the server.")
     @app_commands.guilds(discord.Object(id=1049118743101452329))
