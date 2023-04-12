@@ -65,7 +65,7 @@ class BDTools(commands.Cog):
             await ctx.channel.edit(locked=True, reason=reason)
         else:
             await ctx.channel.edit(locked=True)
-        await ctx.send("Topic has been closed.")
+        await ctx.send("Topic has been locked.")
 
     @app_commands.command(name="blacklist", description="Blacklist a member from various parts of the server.")
     @app_commands.guilds(discord.Object(id=1049118743101452329))
