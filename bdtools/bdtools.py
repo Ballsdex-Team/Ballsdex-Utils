@@ -1,6 +1,7 @@
 import discord
+import enum
 
-from redbot.core import commands
+from redbot.core import commands, app_commands
 from redbot.core.bot import Red
 
 ROLE_IDS = {
@@ -11,6 +12,15 @@ ROLE_IDS = {
     "ads": 1059931415069863976,
     "art": 1068426860964347904
 }
+
+
+class BlacklistChoices(enum.Enum):
+    ticket = 1059622470677704754
+    boss = 1054624927879266404
+    forum = 1055747502726447184
+    reactions = 1052727000369995938
+    ads = 1059931415069863976
+    art = 1068426860964347904
 
 
 class BDTools(commands.Cog):
@@ -69,3 +79,24 @@ class BDTools(commands.Cog):
         role = [ctx.guild.get_role(ROLE_IDS[_type])]
         await user.add_roles(*role)
         await ctx.tick()
+
+    @app_commands.command(name="blacklist", description="Blacklist a member from various parts of the server.")
+    @app_commands.guilds(discord.Object(id=1049118743101452329))
+    @app_commands.guild_only()
+    @app_commands.default_permissions(administrator=True)
+    async def slash_blacklist(self, interaction: discord.Interaction, member: discord.Member, blacklist_type: BlacklistChoices) -> None:
+        """Blacklist a member from various parts of the server.
+
+        Parameters
+        -----------
+        member: discord.Member
+            A member to blacklist.
+        type: BlacklistChoices
+            The type of blacklist to add a member to.
+        """
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        role = interaction.guild.get_role(blacklist_type.value)
+        if type(role) is None:
+            return await interaction.followup.send("Role not found. Please notify the proper people.")
+        await member.add_roles(role)
+        await interaction.followup.send(f"Successfully blacklisted {member.display_name} from {blacklist_type.name}")
