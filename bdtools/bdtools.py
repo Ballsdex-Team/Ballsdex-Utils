@@ -96,6 +96,15 @@ class BDTools(commands.Cog):
             The type of blacklist to add a member to.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
+
+        # Security checks
+        if member.bot is True:
+            return await interaction.followup.send("You're not allowed to blacklist bots.")
+        if any(role.id in ROLE_IDS.values() for role in member.roles):
+            return await interaction.followup.send("Member is already blacklisted.")
+        if any(role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102] for role in member.roles):
+            return await interaction.followup.send("You're not allowed to blacklist a moderator or administrator.")
+
         role = interaction.guild.get_role(ROLE_IDS[blacklist_type.name])
         if type(role) is None:
             return await interaction.followup.send("Role not found. Please notify the proper people.")
