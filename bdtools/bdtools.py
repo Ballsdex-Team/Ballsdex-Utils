@@ -1,6 +1,8 @@
 import discord
 import enum
 
+from typing import Optional
+
 from redbot.core import commands, app_commands
 from redbot.core.bot import Red
 
@@ -41,22 +43,28 @@ class BDTools(commands.Cog):
 
     @commands.mod()
     @commands.command()
-    async def close(self, ctx: commands.Context, *, reason: str):
+    async def close(self, ctx: commands.Context, *, reason: Optional[str] = None):
         """Close a thread/forum post."""
         if not isinstance(ctx.channel, discord.Thread):
             await ctx.send("This channel is not a thread or forum post.")
             return
-        await ctx.channel.edit(locked=True, archived=True, reason=reason)
+        if reason is not None:
+            await ctx.channel.edit(locked=True, archived=True, reason=reason)
+        else:
+            await ctx.channel.edit(locked=True, archived=True)
         await ctx.send("Topic has been closed.")
 
     @commands.mod()
     @commands.command()
-    async def lock(self, ctx: commands.Context, *, reason: str):
+    async def lock(self, ctx: commands.Context, *, reason: Optional[str] = None):
         """Lock a forum/thread."""
         if not isinstance(ctx.channel, discord.Thread):
             await ctx.send("This channel is not a thread or forum post.")
             return
-        await ctx.channel.edit(locked=True, reason=reason)
+        if reason is not None:
+            await ctx.channel.edit(locked=True, reason=reason)
+        else:
+            await ctx.channel.edit(locked=True)
         await ctx.send("Topic has been closed.")
 
     @app_commands.command(name="blacklist", description="Blacklist a member from various parts of the server.")
