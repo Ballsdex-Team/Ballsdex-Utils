@@ -36,9 +36,9 @@ class BDTools(commands.Cog):
     async def slowmode(self, ctx: commands.Context, time: int):
         """Set the slowmode for the channel."""
         if time < 0 or time > 60:
-            await ctx.send("The time your have provided is out of bounds. It just be between 0 and 60.")
+            await ctx.send("The time your have provided is out of bounds. It should be between 0 and 60.")
             return
-        await ctx.channel.edit(slowmode_delay=time)
+        await ctx.channel.edit(slowmode_delay=time, reason=f"Requested by {str(ctx.author)}")
         await ctx.send(f"Slowmode has been set to {time} seconds.")
 
     @commands.mod()
@@ -50,9 +50,17 @@ class BDTools(commands.Cog):
             return
         await ctx.send("Topic has been closed.")
         if reason is not None:
-            await ctx.channel.edit(locked=True, archived=True, reason=reason)
+            await ctx.channel.edit(
+                locked=True,
+                archived=True,
+                reason=f"Requested by {str(ctx.author)} | {reason}"
+            )
         else:
-            await ctx.channel.edit(locked=True, archived=True)
+            await ctx.channel.edit(
+                locked=True,
+                archived=True,
+                reason=f"Requested by {str(ctx.author)}"
+            )
 
     @commands.mod()
     @commands.command()
@@ -63,9 +71,15 @@ class BDTools(commands.Cog):
             return
         await ctx.send("Topic has been locked.")
         if reason is not None:
-            await ctx.channel.edit(locked=True, reason=reason)
+            await ctx.channel.edit(
+                locked=True,
+                reason=f"Requested by {str(ctx.author)} | {reason}"
+            )
         else:
-            await ctx.channel.edit(locked=True)
+            await ctx.channel.edit(
+                locked=True,
+                reason=f"Requested by {str(ctx.author)}"
+            )
 
     @app_commands.command(name="blacklist", description="Blacklist a member from various parts of the server.")
     @app_commands.guilds(discord.Object(id=1049118743101452329))
@@ -85,5 +99,8 @@ class BDTools(commands.Cog):
         role = interaction.guild.get_role(ROLE_IDS[blacklist_type.name])
         if type(role) is None:
             return await interaction.followup.send("Role not found. Please notify the proper people.")
-        await member.add_roles(role)
+        await member.add_roles(
+            role,
+            reason=f"Requested by {str(interaction.user)}"
+        )
         return await interaction.followup.send(f"Successfully blacklisted `{member.display_name}` from `{blacklist_type.name}`")
