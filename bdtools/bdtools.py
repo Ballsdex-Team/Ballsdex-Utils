@@ -59,27 +59,6 @@ class BDTools(commands.Cog):
         await ctx.channel.edit(locked=True, reason=reason)
         await ctx.send("Topic has been closed.")
 
-    @commands.mod()
-    @commands.command(usage="<type> <user>", name="bdblacklist")
-    async def blacklist(self, ctx: commands.Context, _type: str, user: discord.Member):
-        """Blacklist a user from various parts of the bot.
-
-
-        Valid types:
-            -   Ticket - Blacklist a user from tickets.
-            -   Boss - Mute a user from boss fights.
-            -   Forum - Blacklist a user from forums.
-            -   Reactions - Blacklist a user from using reactions.
-            -   Ads - Blacklist a user from advertisements.
-            -   Art - Blacklist a user from art & media."""
-        _type = _type.lower()
-        if _type not in ROLE_IDS:
-            await ctx.send(f"The type of blacklist you have provided does not exist, pleas use one of the following: {', '.join(ROLE_IDS.keys())}")
-            return
-        role = [ctx.guild.get_role(ROLE_IDS[_type])]
-        await user.add_roles(*role)
-        await ctx.tick()
-
     @app_commands.command(name="blacklist", description="Blacklist a member from various parts of the server.")
     @app_commands.guilds(discord.Object(id=1049118743101452329))
     @app_commands.guild_only()
@@ -91,7 +70,7 @@ class BDTools(commands.Cog):
         -----------
         member: discord.Member
             A member to blacklist.
-        type: BlacklistChoices
+        blacklist_type: BlacklistChoices
             The type of blacklist to add a member to.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
@@ -99,4 +78,4 @@ class BDTools(commands.Cog):
         if type(role) is None:
             return await interaction.followup.send("Role not found. Please notify the proper people.")
         await member.add_roles(role)
-        await interaction.followup.send(f"Successfully blacklisted {member.display_name} from {blacklist_type.name}")
+        return await interaction.followup.send(f"Successfully blacklisted `{member.display_name}` from `{blacklist_type.name}`")
