@@ -60,7 +60,7 @@ class BDTools(commands.Cog):
         await ctx.send("Topic has been closed.")
 
     @commands.mod()
-    @commands.command(usage="<type> <user>")
+    @commands.command(usage="<type> <user>", name="bdblacklist")
     async def blacklist(self, ctx: commands.Context, _type: str, user: discord.Member):
         """Blacklist a user from various parts of the bot.
 
