@@ -1,5 +1,6 @@
 import discord
 import enum
+import re
 
 from typing import Optional
 
@@ -15,6 +16,7 @@ ROLE_IDS = {
     "art": 1068426860964347904
 }
 
+URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
 
 class BlacklistChoices(enum.Enum):
     ticket = 0
@@ -30,6 +32,18 @@ class BDTools(commands.Cog):
 
     def __init__(self, bot: Red):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """Add a reaction to messages with attachments or links for art contest."""
+        if any(role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102] for role in message.author.roles):
+            return
+        if message.channel.id != 1097569050734891059:
+            return
+        if message.attachments or URL_REGEX.search(message.content):
+            await message.add_reaction("👍")
+            return
+        await message.delete()
 
     @commands.mod()
     @commands.command()
