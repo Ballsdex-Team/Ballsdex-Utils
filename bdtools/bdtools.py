@@ -56,7 +56,7 @@ class BDTools(commands.Cog):
         await ctx.send(f"Slowmode has been set to {time} seconds.")
 
     @commands.mod()
-    @commands.group(name=thread)
+    @commands.group(name="thread")
     async def thread_group(self, ctx):
         pass
 
