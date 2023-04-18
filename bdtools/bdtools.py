@@ -56,7 +56,12 @@ class BDTools(commands.Cog):
         await ctx.send(f"Slowmode has been set to {time} seconds.")
 
     @commands.mod()
-    @commands.command()
+    @commands.group(name=thread)
+    async def thread_group(self, ctx):
+        pass
+
+    @commands.mod()
+    @thread_group.command()
     async def close(self, ctx: commands.Context, *, reason: Optional[str] = None):
         """Close a thread/forum post."""
         if not isinstance(ctx.channel, discord.Thread):
@@ -77,7 +82,7 @@ class BDTools(commands.Cog):
             )
 
     @commands.mod()
-    @commands.command()
+    @thread_group.command()
     async def lock(self, ctx: commands.Context, *, reason: Optional[str] = None):
         """Lock a forum/thread."""
         if not isinstance(ctx.channel, discord.Thread):
