@@ -161,6 +161,59 @@ class BDTools(commands.Cog):
             )
 
     # --- Slash Commands ---
+    @app_commands.command(name="clear-marketplace")
+    @app_commands.guilds(discord.Object(id=1049118743101452329))
+    @app_commands.guild_only()
+    @app_commands.default_permissions(administrator=True)
+    async def slash_clear_marketplace(
+        self, interaction: discord.Interaction,
+        you_sure: bool = False,
+    ) -> None:
+        """Lock, archive, and clean the marketplace.
+
+        Parameters
+        -----------
+        you_sure: bool
+            Whether or not you are sure you want to clear the marketplace.
+        """
+        if you_sure is False:
+            return await interaction.response.send_message(
+                "You must be sure you want to clear the marketplace.",
+                ephemeral=True,
+            )
+
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        # This better not take 15 minutes!
+        overwrite = discord.PermissionOverwrite()
+        overwrite.send_messages = False
+        overwrite.send_messages_in_threads = False
+        overwrite.add_reactions = False
+
+        await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
+        marketplace = discord.utils.get(interaction.guild.channels, id=1092534995605782678)
+        marketplace: discord.ForumChannel
+        if marketplace is None:
+            return await interaction.followup.send(
+                "The marketplace channel could not be found.",
+                ephemeral=True,
+            )
+        thread_list = marketplace.threads  # Store a local copy so we don't close our maintain message
+        tag = discord.utils.get(marketplace.available_tags, name="Meta")
+
+        pinned_thread = await marketplace.create_thread(
+            name="Marketplace Maintenance 🧹",
+            content="The marketplace is currently being cleaned. Please check back later.",
+            applied_tags=[tag]
+        )
+        await pinned_thread.edit(locked=True, pinned=True)
+        for thread in thread_list:
+            await thread.edit(locked=True, archived=True)
+        # Undo the permissions
+        overwrite.send_messages = None
+        overwrite.send_messages_in_threads = None
+        await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
+        await interaction.followup.send("All done!")
+
     @app_commands.command(
         name="blacklist",
         description="Blacklist a member from various parts of the server.",
