@@ -54,7 +54,7 @@ class BDTools(commands.Cog):
             title=f"{event}",
             description=f"{message}",
         )
-        embed.set_author(name=str(mod), icon_url=mod.avatar_url)
+        embed.set_author(name=str(mod), icon_url=mod.avatar.url)
         await log_channel.send(embed=embed)
 
     # --- Set Commands ---
