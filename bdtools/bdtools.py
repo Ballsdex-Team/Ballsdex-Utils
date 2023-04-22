@@ -204,7 +204,7 @@ class BDTools(commands.Cog):
             content="The marketplace is currently being cleaned. Please check back later.",
             applied_tags=[tag]
         )
-        await pinned_thread.edit(locked=True, pinned=True)
+        await pinned_thread.thread.edit(locked=True, pinned=True)
         for thread in thread_list:
             await thread.edit(locked=True, archived=True)
         # Undo the permissions
