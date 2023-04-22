@@ -7,6 +7,7 @@ from typing import Optional
 from redbot.core import commands, app_commands
 from redbot.core.bot import Red
 
+URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
 ROLE_IDS = {
     "ticket": 1059622470677704754,
     "boss": 1054624927879266404,
@@ -16,7 +17,6 @@ ROLE_IDS = {
     "art": 1068426860964347904
 }
 
-URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
 
 class BlacklistChoices(enum.Enum):
     ticket = 0
@@ -32,18 +32,6 @@ class BDTools(commands.Cog):
 
     def __init__(self, bot: Red):
         self.bot = bot
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        """Add a reaction to messages with attachments or links for art contest."""
-        if any(role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102] for role in message.author.roles):
-            return
-        if message.channel.id != 1097569050734891059:
-            return
-        if message.attachments or URL_REGEX.search(message.content):
-            await message.add_reaction("👍")
-            return
-        await message.delete()
 
     @commands.mod()
     @commands.command()
@@ -132,3 +120,15 @@ class BDTools(commands.Cog):
             reason=f"Requested by {str(interaction.user)}"
         )
         return await interaction.followup.send(f"Successfully blacklisted `{member.display_name}` from `{blacklist_type.name}`")
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """Add a reaction to messages with attachments or links for art contest."""
+        if any(role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102] for role in message.author.roles):
+            return
+        if message.channel.id != 1097569050734891059:
+            return
+        if message.attachments or URL_REGEX.search(message.content):
+            await message.add_reaction("👍")
+            return
+        await message.delete()
