@@ -47,7 +47,7 @@ class BDTools(commands.Cog):
         log_channel_id = await self.config.guild(guild).log_channel()
         if log_channel_id is None:
             return
-        log_channel = message.guild.get_channel(log_channel_id)
+        log_channel = guild.get_channel(log_channel_id)
         if log_channel is None:
             return
         embed = discord.Embed(
