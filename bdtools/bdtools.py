@@ -189,14 +189,13 @@ class BDTools(commands.Cog):
         overwrite.send_messages_in_threads = False
         overwrite.add_reactions = False
 
-        await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
         marketplace = discord.utils.get(interaction.guild.channels, id=1092534995605782678)
-        marketplace: discord.ForumChannel
         if marketplace is None:
             return await interaction.followup.send(
                 "The marketplace channel could not be found.",
                 ephemeral=True,
             )
+        await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
         thread_list = marketplace.threads  # Store a local copy so we don't close our maintain message
         tag = discord.utils.get(marketplace.available_tags, name="Meta")
 
