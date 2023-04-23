@@ -213,18 +213,24 @@ class BDTools(commands.Cog):
         await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
         await interaction.followup.send("All done!")
 
-    @app_commands.command(
+    blacklist_group = app_commands.Group(
         name="blacklist",
         description="Blacklist a member from various parts of the server.",
+        guilds=[discord.Object(id=1049118743101452329)],
+        guild_only=True,
+        default_permissions={"administrator": True},
     )
-    @app_commands.guilds(discord.Object(id=1049118743101452329))
-    @app_commands.guild_only()
-    @app_commands.default_permissions(administrator=True)
-    async def slash_blacklist(
+
+    @blacklist_group.command(
+        name="add",
+        description="Add a member to a blacklist.",
+    )
+    async def slash_blacklist_add(
         self,
         interaction: discord.Interaction,
         member: discord.Member,
         blacklist_type: BlacklistChoices,
+        reason: str,
     ) -> None:
         """Blacklist a member from various parts of the server.
 
@@ -234,6 +240,8 @@ class BDTools(commands.Cog):
             A member to blacklist.
         blacklist_type: BlacklistChoices
             The type of blacklist to add a member to.
+        reason: str
+            The reason for blacklisting the member.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
 
@@ -265,7 +273,66 @@ class BDTools(commands.Cog):
             guild=interaction.guild,
             mod=interaction.user,
             event="Member server blacklisted",
-            message=f"{member.mention} has been blacklisted from {blacklist_type.name}.",
+            message=(
+                f"{member.mention} has been blacklisted from {blacklist_type.name}.\n"
+                f"Reason: {reason}"
+            ),
+        )
+
+    @blacklist_group.command(
+        name="remove",
+        description="Remove a member from a blacklist.",
+    )
+    async def slash_blacklist_remove(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        blacklist_type: BlacklistChoices,
+        reason: str,
+    ) -> None:
+        """De-blacklist a member from various parts of the server.
+
+        Parameters
+        -----------
+        member: discord.Member
+            A member to blacklist.
+        blacklist_type: BlacklistChoices
+            The type of blacklist to remove a member from.
+        reason: str
+            The reason for de-blacklisting the member.
+        """
+        await interaction.response.defer(thinking=True, ephemeral=True)
+
+        # Security checks
+        if member.bot is True:
+            return await interaction.followup.send(
+                "You're not allowed to blacklist bots."
+            )
+        if any(
+            role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102]
+            for role in member.roles
+        ):
+            return await interaction.followup.send(
+                "You're not allowed to blacklist a moderator or administrator."
+            )
+
+        role = interaction.guild.get_role(ROLE_IDS[blacklist_type.name])
+        if type(role) is None:
+            return await interaction.followup.send(
+                "Role not found. Please notify the proper people."
+            )
+        await member.remove_roles(role, reason=f"Requested by {str(interaction.user)}")
+        await interaction.followup.send(
+            f"Successfully de-blacklisted `{member.display_name}` from `{blacklist_type.name}`"
+        )
+        await self.maybe_send_logs(
+            guild=interaction.guild,
+            mod=interaction.user,
+            event="Member server de-blacklisted",
+            message=(
+                f"{member.mention} has been de-blacklisted from {blacklist_type.name}.\n"
+                f"Reason: {reason}"
+            ),
         )
 
     # --- Events ---
