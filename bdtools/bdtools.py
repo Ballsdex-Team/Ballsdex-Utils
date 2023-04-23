@@ -217,6 +217,7 @@ class BDTools(commands.Cog):
         name="blacklist",
         description="Blacklist a member from various parts of the server.",
         guild_only=True,
+        guild_ids=[1049118743101452329],
         default_permissions={"administrator": True},
     )
 
