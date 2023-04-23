@@ -216,7 +216,6 @@ class BDTools(commands.Cog):
     blacklist_group = app_commands.Group(
         name="blacklist",
         description="Blacklist a member from various parts of the server.",
-        guilds=[discord.Object(id=1049118743101452329)],
         guild_only=True,
         default_permissions={"administrator": True},
     )
