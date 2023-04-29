@@ -339,12 +339,12 @@ class BDTools(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Add a reaction to messages with attachments or links for art contest."""
+        if message.channel.id != 1097569050734891059:
+            return
         if any(
             role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102]
             for role in message.author.roles
         ):
-            return
-        if message.channel.id != 1097569050734891059:
             return
         if message.attachments or URL_REGEX.search(message.content):
             await message.add_reaction("👍")
