@@ -75,25 +75,25 @@ class BDTools(commands.Cog):
         await ctx.send(f"Log channel has been set to {channel.mention}.")
 
     # --- Text Commands ---
-    @commands.mod()
-    @commands.command()
-    async def slowmode(self, ctx: commands.Context, time: int):
-        """Set the slowmode for the channel."""
-        if time < 0 or time > 60:
-            await ctx.send(
-                "The time your have provided is out of bounds. It should be between 0 and 60."
-            )
-            return
-        await ctx.channel.edit(
-            slowmode_delay=time, reason=f"Requested by {str(ctx.author)}"
-        )
-        await ctx.send(f"Slowmode has been set to {time} seconds.")
-        await self.maybe_send_logs(
-            guild=ctx.guild,
-            mod=ctx.author,
-            event="Slowmode set",
-            message=f"Slowmode has been set to {time} seconds on {ctx.channel.mention}."
-        )
+#    @commands.mod()
+#    @commands.command()
+#    async def slowmode(self, ctx: commands.Context, time: int):
+#        """Set the slowmode for the channel."""
+#        if time < 0 or time > 60:
+#            await ctx.send(
+#                "The time your have provided is out of bounds. It should be between 0 and 60."
+#            )
+#            return
+#        await ctx.channel.edit(
+#            slowmode_delay=time, reason=f"Requested by {str(ctx.author)}"
+#        )
+#        await ctx.send(f"Slowmode has been set to {time} seconds.")
+#        await self.maybe_send_logs(
+#            guild=ctx.guild,
+#            mod=ctx.author,
+#            event="Slowmode set",
+#            message=f"Slowmode has been set to {time} seconds on {ctx.channel.mention}."
+#        )
 
     @commands.mod()
     @commands.group(name="thread")
