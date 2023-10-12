@@ -199,12 +199,18 @@ class BDTools(commands.Cog):
         thread_list = marketplace.threads  # Store a local copy so we don't close our maintain message
         tag = discord.utils.get(marketplace.available_tags, name="Meta")
 
-        pinned_thread = await marketplace.create_thread(
-            name="Marketplace Maintenance 🧹",
-            content="The marketplace is currently being cleaned. Please check back later.",
-            applied_tags=[tag]
-        )
-        await pinned_thread.thread.edit(locked=True, pinned=True)
+        try:
+            pinned_thread = await marketplace.create_thread(
+                name="Marketplace Maintenance 🧹",
+                content="The marketplace is currently being cleaned. Please check back later.",
+                applied_tags=[tag]
+            )
+            await pinned_thread.thread.edit(locked=True, pinned=True)
+        except discord.HTTPException:
+            await interaction.followup.send(
+                "The marketplace could not be cleaned due to max pinned threads being reached.",
+                ephemeral=True,
+            )
         for thread in thread_list:
             await thread.edit(locked=True, archived=True)
         # Undo the permissions
