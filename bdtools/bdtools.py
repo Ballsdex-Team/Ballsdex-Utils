@@ -207,10 +207,10 @@ class BDTools(commands.Cog):
             )
             await pinned_thread.thread.edit(locked=True, pinned=True)
         except discord.HTTPException:
-            await interaction.followup.send(
-                "The marketplace could not be cleaned due to max pinned threads being reached.",
-                ephemeral=True,
-            )
+            return await interaction.followup.send(
+                    "The marketplace could not be cleaned due to max pinned threads being reached.",
+                    ephemeral=True,
+                )
         for thread in thread_list:
             await thread.edit(locked=True, archived=True)
         # Undo the permissions
