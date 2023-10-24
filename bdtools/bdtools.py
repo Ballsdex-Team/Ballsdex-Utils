@@ -342,16 +342,14 @@ class BDTools(commands.Cog):
         )
 
     # --- Events ---
-#    @commands.Cog.listener()
-#    async def on_message(self, message):
-#        """Add a reaction to messages with attachments or links for art contest."""
-#        if message.channel.id != 1064916801751888003: # Art channel.
-#            return
-#        if any(
-#            role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102, 1049119446372986921, 1091077320292438149]
-#            for role in message.author.roles
-#        ):
-#            return
-#        if message.attachments or URL_REGEX.search(message.content):
-#            return            
-#        await message.delete()
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """Add a reaction to messages with attachments or links for art contest."""
+        if message.channel.id != 1166396298296053850: # Art channel.
+            return
+        if any(
+            role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102, 1049119446372986921, 1091077320292438149]
+            for role in message.author.roles
+        ):
+            return
+        await message.add_reaction("👍")
