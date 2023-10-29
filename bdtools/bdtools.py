@@ -216,7 +216,14 @@ class BDTools(commands.Cog):
         # Undo the permissions
         overwrite.send_messages = None
         overwrite.send_messages_in_threads = None
+        await pinned_thread.edit(locked=True, archived=True)
         await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
+        trade = await marketplace.create_thread(
+                name="Ask for Trade",
+                content="Post your trades below.",
+                applied_tags=[tag]
+        )
+        await trade.thread.edit(pinned=True)
         await interaction.followup.send("All done!")
 
     blacklist_group = app_commands.Group(
