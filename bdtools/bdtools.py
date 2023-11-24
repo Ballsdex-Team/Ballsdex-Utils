@@ -352,7 +352,7 @@ class BDTools(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Add a reaction to messages with attachments or links for art contest."""
-        if message.channel.id != 1166396298296053850: # Art channel.
+        if message.channel.id != 1177735598275035157: # Art channel.
             return
         if any(
             role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102, 1049119446372986921, 1091077320292438149]
