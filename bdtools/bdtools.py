@@ -355,8 +355,8 @@ class BDTools(commands.Cog):
         if message.channel.id != 1177735598275035157: # Art channel.
             return
         if any(
-            # Ballsdex and Proto helper bot.
-            role.id in [1049119096517705762, 1091077320292438149]
+            # Ballsdex and Proto helper bot, bots
+            role.id in [1049119096517705762, 1091077320292438149, 1049188813508980806]
             for role in message.author.roles
         ):
             return
