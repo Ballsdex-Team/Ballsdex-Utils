@@ -224,6 +224,11 @@ class BDTools(commands.Cog):
                 applied_tags=[tag]
         )
         await trade.thread.edit(pinned=True)
+        await marketplace.create_thread(
+                name="Ask for Ball",
+                content="Ask for balls below, any duplicate threads will be deleted..",
+                applied_tags=[tag]
+        )
         await interaction.followup.send("All done!")
 
     blacklist_group = app_commands.Group(
