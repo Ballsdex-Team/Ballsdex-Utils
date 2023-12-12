@@ -359,55 +359,55 @@ class BDTools(commands.Cog):
             ),
         )
 
-    thread_group = app_commands.Group(
-        name="thread",
-        description="Various thread actions.",
-        guild_only=True,
-        guild_ids=[1049118743101452329],
-    )
+    # thread_group = app_commands.Group(
+    #     name="thread",
+    #     description="Various thread actions.",
+    #     guild_only=True,
+    #     guild_ids=[1049118743101452329],
+    # )
 
-    @thread_group.command(
-        name="remove",
-        description="Remove a user from a thread.",
-    )
-    async def slash_thread_remove(
-        self,
-        interaction: discord.Interaction,
-        member: discord.Member,
-    ) -> None:
-        """Remove a user from a thread.
+    # @thread_group.command(
+    #     name="remove",
+    #     description="Remove a user from a thread.",
+    # )
+    # async def slash_thread_remove(
+    #     self,
+    #     interaction: discord.Interaction,
+    #     member: discord.Member,
+    # ) -> None:
+    #     """Remove a user from a thread.
 
-        Parameters
-        -----------
-        member: discord.Member
-            A member to remove from a thread.
-        """
-        await interaction.response.defer(thinking=True, ephemeral=True)
-        thread = interaction.channel
-        if not isinstance(thread, discord.Thread):
-            return await interaction.followup.send(
-                "This channel is not a thread or forum post."
-            )
-        if member not in thread.recipient:
-            return await interaction.followup.send(
-                "This member is not in this thread."
-            )
-        if interaction.user != thread.owner or interaction.guild.get_role(1049119446372986921) not in interaction.user.roles or interaction.guild.get_role(1100043591625232404) not in interaction.user.roles:
-            return await interaction.followup.send(
-                "You are not allowed to remove members from threads."
-            )
-        await thread.remove_recipient(member)
-        await interaction.followup.send(
-            f"Successfully removed `{member.display_name}` from `{thread.name}`"
-        )
-        await self.maybe_send_logs(
-            guild=interaction.guild,
-            mod=interaction.user,
-            event="Member removed from thread",
-            message=(
-                f"{member.mention} has been removed from {thread.name}.\n"
-            ),
-        )
+    #     Parameters
+    #     -----------
+    #     member: discord.Member
+    #         A member to remove from a thread.
+    #     """
+    #     await interaction.response.defer(thinking=True, ephemeral=True)
+    #     thread = interaction.channel
+    #     if not isinstance(thread, discord.Thread):
+    #         return await interaction.followup.send(
+    #             "This channel is not a thread or forum post."
+    #         )
+    #     if member not in thread.recipient:
+    #         return await interaction.followup.send(
+    #             "This member is not in this thread."
+    #         )
+    #     if interaction.user != thread.owner or interaction.guild.get_role(1049119446372986921) not in interaction.user.roles or interaction.guild.get_role(1100043591625232404) not in interaction.user.roles:
+    #         return await interaction.followup.send(
+    #             "You are not allowed to remove members from threads."
+    #         )
+    #     await thread.remove_recipient(member)
+    #     await interaction.followup.send(
+    #         f"Successfully removed `{member.display_name}` from `{thread.name}`"
+    #     )
+    #     await self.maybe_send_logs(
+    #         guild=interaction.guild,
+    #         mod=interaction.user,
+    #         event="Member removed from thread",
+    #         message=(
+    #             f"{member.mention} has been removed from {thread.name}.\n"
+    #         ),
+    #     )
     
 
     # --- Events ---
@@ -556,7 +556,7 @@ class UnbanView(View):
         self.cog = cog
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.guild.get_role(1049119446372986921) not in interaction.user.roles or interaction.guild.get_role(1100043591625232404) not in interaction.user.roles:
+        if 1049119446372986921 not in [x.id for x in interaction.user.roles] or 1100043591625232404 not in [x.id for x in interaction.user.roles]:
             await interaction.response.send_message(
                 "You are not allowed to use this command.", ephemeral=True
             )
