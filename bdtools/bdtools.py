@@ -556,7 +556,7 @@ class UnbanView(View):
         self.cog = cog
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if 1095015474846248970 not in [x.id for x in interaction.user.roles]:
+        if 1100043591625232404 not in [x.id for x in interaction.user.roles]:
             await interaction.response.send_message(
                 "You are not allowed to use this command.", ephemeral=True
             )
