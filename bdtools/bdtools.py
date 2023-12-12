@@ -410,7 +410,7 @@ class BDTools(commands.Cog):
     #         ),
     #     )
     
-    def handle_req(self, message):
+    async def handle_req(self, message):
         try:
             ban_appeal = json.loads(message.content)
         except json.JSONDecodeError:
@@ -459,7 +459,7 @@ class BDTools(commands.Cog):
         """Check for ban appeals."""
         ban_appeal_channel = ctx.guild.get_channel(1184084842405707828)
         async for message in ban_appeal_channel.history(limit=amount):
-            self.handle_req(message)
+            await self.handle_req(message)
 
 
     # --- Events ---
@@ -467,7 +467,7 @@ class BDTools(commands.Cog):
     async def on_message(self, message):
         """Add a reaction to messages with attachments or links for art contest."""
         if message.channel.id == 1184084842405707828:
-            handle_req(message)
+            await self.handle_req(message)
             return
 
         if message.channel.id != 1177735598275035157: # Art channel.
