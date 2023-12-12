@@ -1,10 +1,16 @@
 import discord
 import enum
 import re
+import json
+from email.message import EmailMessage
 
-from typing import Optional, Union
+import aiosmtplib
 
-from redbot.core import commands, app_commands, Config
+from typing import Optional, Union, cast
+
+from discord.ui import Button, Modal, TextInput, View
+
+from redbot.core import commands, app_commands, Config, modlog
 from redbot.core.bot import Red
 
 URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
@@ -33,8 +39,8 @@ class BDTools(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
-
-        self.config.register_guild(log_channel=None)
+        self.config.register_guild(log_channel=None, email=None, password=None)
+        self.bot.add_view(UnbanView(None, None, None, bot, self))
 
     async def maybe_send_logs(
         self,
@@ -357,6 +363,42 @@ class BDTools(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Add a reaction to messages with attachments or links for art contest."""
+        if message.channel.id == 1184084842405707828:
+            try:
+                ban_appeal = json.loads(message.content)
+            except json.JSONDecodeError:
+                return
+            # check if user is banned
+            # if not, return
+            # if so, send message to ban-appeals channel
+            try:
+                ban_entry = await message.guild.fetch_ban(discord.Object(ban_appeal["id"]))
+            except discord.NotFound:
+                message = EmailMessage()
+                message["From"] = await self.config.guild(message.guild).email()
+                message["To"] = self.email
+                message["Subject"] = "Ballsdex Ban Appeal"
+                contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
+                message.set_content(contents)
+                await aiosmtplib.send(
+                    message,
+                    recipients=[self.email],
+                    hostname="smtp.gmail.com",
+                    port=465,
+                    username=await self.config.guild(message.guild).email(),
+                    password=await self.config.guild(message.guild).password(),
+                    use_tls=True,
+                )
+                return
+            ban_appeal_channel = message.guild.get_channel(1184091996932022292)
+            embed = discord.Embed(
+                title=f"Ban Appeal for {ban_appeal['name']}",
+                description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
+
+            )
+            await ban_appeal_channel.send(embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self))
+            return
+
         if message.channel.id != 1177735598275035157: # Art channel.
             return
         if any(
@@ -366,3 +408,121 @@ class BDTools(commands.Cog):
         ):
             return
         await message.add_reaction("👍")
+
+
+
+class UnbanPrompt(Modal, title=f"Unban Appeal"):
+    reason = TextInput(
+        label="Unban Confirmation", style=discord.TextStyle.short, placeholder="Are you sure? Please type 'yes' to confirm."
+    )
+
+    def __init__(self, interaction, button, ban, email, bot, cog):
+        super().__init__()
+        self.interaction = interaction
+        self.button = button
+        self.ban = ban
+        self.email = email
+        self.bot = bot
+        self.cog = cog
+
+
+    async def on_submit(self, interaction):
+        if self.reason.value.lower() != "yes":
+            await interaction.response.send_message(f"{interaction.user.mention} has not unbanned {self.ban.user} because they did not confirm.", ephemeral=True)
+            return
+        await interaction.guild.unban(self.ban.user, reason=self.reason.value)
+        await interaction.response.send_message(f"{interaction.user.mention} has unbanned {self.ban.user} for {self.reason.value}.")
+        await modlog.create_case(
+            self.bot,
+            interaction.guild,
+            interaction.created_at,
+            "unban",
+            self.ban.user,
+            self.interaction.user,
+            self.reason.value,
+        )
+        message = EmailMessage()
+        message["From"] = await self.cog.config.guild(interaction.guild).email()
+        message["To"] = self.email
+        message["Subject"] = "Ballsdex Ban Appeal Result"
+        contents = f"Your ban appeal for {interaction.guild} has been accepted. You have been unbanned. Please follow the rules in the future.\nThe invite to rejoin is https://discord.gg/ballsdex\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
+        message.set_content(contents)
+        await aiosmtplib.send(
+            message,
+            recipients=[self.email],
+            hostname="smtp.gmail.com",
+            port=465,
+            username=await self.cog.config.guild(interaction.guild).email(),
+            password=await self.cog.config.guild(interaction.guild).password(),
+            use_tls=True,
+        )
+        # remove buttons from original interaction
+        await self.interaction.message.edit(view=None)
+
+
+class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
+    reason = TextInput(
+        label="Reason for denial", style=discord.TextStyle.long
+    )
+
+    def __init__(self, interaction, button, ban, email, cog):
+        super().__init__()
+        self.interaction = interaction
+        self.button = button
+        self.ban = ban
+        self.email = email
+        self.cog = cog
+
+
+    async def on_submit(self, interaction):
+        await interaction.response.send_message(f"{interaction.user.mention} has denied {self.ban.user}'s appeal for {self.reason.value}.")
+        message = EmailMessage()
+        message["From"] = await self.cog.config.guild(interaction.guild).email()
+        message["To"] = self.email
+        message["Subject"] = "Ballsdex Ban Appeal Result"
+        contents = f"Your ban appeal for {interaction.guild} has been denied for the following reason: {self.reason.value}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
+        message.set_content(contents)
+        await aiosmtplib.send(
+            message,
+            recipients=[self.email],
+            hostname="smtp.gmail.com",
+            port=465,
+            username=await self.cog.config.guild(interaction.guild).email(),
+            password=await self.cog.config.guild(interaction.guild).password(),
+            use_tls=True,
+        )
+        # remove buttons from original interaction
+        await self.interaction.message.edit(view=None)
+
+
+class UnbanView(View):
+    def __init__(self, interaction: discord.Interaction, ban, email, bot, cog):
+        super().__init__(timeout=None)
+        self.interaction = interaction
+        self.ban = ban
+        self.email = email
+        self.bot = bot
+        self.cog = cog
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.guild.get_role(1049119446372986921) not in interaction.user.roles or interaction.guild.get_role(1100043591625232404) not in interaction.user.roles:
+            await interaction.response.send_message(
+                "You are not allowed to use this command.", ephemeral=True
+            )
+            return False
+        return True
+
+    @discord.ui.button(
+        style=discord.ButtonStyle.success, label="Unban User", custom_id="unban_button"
+    )
+    async def confirm_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(UnbanPrompt(interaction, button, self.ban, self.email, self.bot, self.cog))
+
+    @discord.ui.button(
+        style=discord.ButtonStyle.danger,
+        label="Reject Appeal",
+        custom_id="reject-button"
+    )
+    async def cancel_button(self, interaction: discord.Interaction, button: Button):
+       await interaction.response.send_modal(UnbanDenyPrompt(interaction, button, self.ban, self.email, self.cog))
+
