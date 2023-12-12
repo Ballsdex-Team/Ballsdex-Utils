@@ -451,7 +451,7 @@ class BDTools(commands.Cog):
             content = ""
             admin_search = ID_REGEX.findall(ban_entry.reason)
             if admin_search:
-                admin = await message.guild.get_member(int(admin_search[0]))
+                admin = message.guild.get_member(int(admin_search[0]))
                 content = admin.mention
             else: 
                 content = "<@1049119446372986921> <@718365766671663144>"
