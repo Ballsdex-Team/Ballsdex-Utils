@@ -411,6 +411,7 @@ class BDTools(commands.Cog):
     #     )
     
     async def handle_req(self, message):
+        guild = message.guild
         try:
             ban_appeal = json.loads(message.content)
         except json.JSONDecodeError:
@@ -419,10 +420,10 @@ class BDTools(commands.Cog):
         # if not, return
         # if so, send message to ban-appeals channel
         try:
-            ban_entry = await message.guild.fetch_ban(discord.Object(ban_appeal["id"]))
+            ban_entry = await guild.fetch_ban(discord.Object(ban_appeal["id"]))
         except discord.NotFound:
             message = EmailMessage()
-            message["From"] = await self.config.guild(message.guild).email()
+            message["From"] = await self.config.guild(guild).email()
             message["To"] = self.email
             message["Subject"] = "Ballsdex Ban Appeal"
             contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
@@ -432,12 +433,12 @@ class BDTools(commands.Cog):
                 recipients=[self.email],
                 hostname="smtp.gmail.com",
                 port=465,
-                username=await self.config.guild(message.guild).email(),
-                password=await self.config.guild(message.guild).password(),
+                username=await self.config.guild(guild).email(),
+                password=await self.config.guild(guild).password(),
                 use_tls=True,
             )
             return
-        ban_appeal_channel = message.guild.get_channel(1184091996932022292)
+        ban_appeal_channel = guild.get_channel(1184091996932022292)
         embed = discord.Embed(
             title=f"Ban Appeal for {ban_appeal['name']}",
             description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
@@ -450,7 +451,7 @@ class BDTools(commands.Cog):
             content = admin.mention
         else:
             admin = None
-            content = "<@1049119446372986921> <@718365766671663144>"
+            content = "<@&1049119786988212296> <@&1049119446372986921>"
         await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin))
 
     @commands.is_owner()
