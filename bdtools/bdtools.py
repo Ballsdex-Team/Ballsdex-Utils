@@ -453,9 +453,10 @@ class BDTools(commands.Cog):
             if admin_search:
                 admin = message.guild.get_member(int(admin_search[0]))
                 content = admin.mention
-            else: 
+            else:
+                admin = None
                 content = "<@1049119446372986921> <@718365766671663144>"
-            await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self))
+            await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin))
             return
 
         if message.channel.id != 1177735598275035157: # Art channel.
@@ -562,7 +563,7 @@ class UnbanView(View):
         self.email = email
         self.bot = bot
         self.cog = cog
-        self.admin = admin
+        self.admin = int(admin)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if 1049119446372986921 in [x.id for x in interaction.user.roles] or 718365766671663144 not in [x.id for x in interaction.user.roles]:
