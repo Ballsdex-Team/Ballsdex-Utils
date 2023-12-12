@@ -14,6 +14,7 @@ from redbot.core import commands, app_commands, Config, modlog
 from redbot.core.bot import Red
 
 URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
+ID_REGEX = re.compile("\d{17,20}")
 ROLE_IDS = {
     "ticket": 1059622470677704754,
     "boss": 1054624927879266404,
@@ -447,7 +448,14 @@ class BDTools(commands.Cog):
                 description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
 
             )
-            await ban_appeal_channel.send(embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self))
+            content = ""
+            admin_search = ID_REGEX.findall(ban_entry.reason)
+            if admin_search:
+                admin = await message.guild.get_member(int(admin_search[0]))
+                content = admin.mention
+            else: 
+                content = "<@1049119446372986921> <@718365766671663144>"
+            await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self))
             return
 
         if message.channel.id != 1177735598275035157: # Art channel.
@@ -547,18 +555,21 @@ class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
 
 
 class UnbanView(View):
-    def __init__(self, interaction: discord.Interaction, ban, email, bot, cog):
+    def __init__(self, interaction: discord.Interaction, ban, email, bot, cog, admin = None):
         super().__init__(timeout=None)
         self.interaction = interaction
         self.ban = ban
         self.email = email
         self.bot = bot
         self.cog = cog
+        self.admin = admin
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if 1100043591625232404 not in [x.id for x in interaction.user.roles]:
+        if 1049119446372986921 in [x.id for x in interaction.user.roles] or 718365766671663144 not in [x.id for x in interaction.user.roles]:
+            return True
+        if (self.admin is not None and interaction.user.id != self.admin):
             await interaction.response.send_message(
-                "You are not allowed to use this command.", ephemeral=True
+                "You are not the banning admin.", ephemeral=True
             )
             return False
         return True
