@@ -424,13 +424,13 @@ class BDTools(commands.Cog):
         except discord.NotFound:
             message = EmailMessage()
             message["From"] = await self.config.guild(guild).email()
-            message["To"] = self.email
+            message["To"] = ban_appeal["email"]
             message["Subject"] = "Ballsdex Ban Appeal"
             contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
             message.set_content(contents)
             await aiosmtplib.send(
                 message,
-                recipients=[self.email],
+                recipients=[ban_appeal["email"]],
                 hostname="smtp.gmail.com",
                 port=465,
                 username=await self.config.guild(guild).email(),
@@ -452,7 +452,8 @@ class BDTools(commands.Cog):
         else:
             admin = None
             content = "<@&1049119786988212296> <@&1049119446372986921>"
-        await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin))
+        allowed_mentions = discord.AllowedMentions(everyone=False, roles=True, users=True)
+        await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin), allowed_mentions=allowed_mentions)
 
     @commands.is_owner()
     @commands.command()
