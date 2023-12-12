@@ -563,7 +563,7 @@ class UnbanView(View):
         self.email = email
         self.bot = bot
         self.cog = cog
-        self.admin = int(admin)
+        self.admin = int(admin) if admin is not None else None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if 1049119446372986921 in [x.id for x in interaction.user.roles] or 718365766671663144 not in [x.id for x in interaction.user.roles]:
