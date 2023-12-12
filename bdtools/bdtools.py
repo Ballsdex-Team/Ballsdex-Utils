@@ -410,53 +410,64 @@ class BDTools(commands.Cog):
     #         ),
     #     )
     
+    def handle_req(self, message):
+        try:
+            ban_appeal = json.loads(message.content)
+        except json.JSONDecodeError:
+            return
+        # check if user is banned
+        # if not, return
+        # if so, send message to ban-appeals channel
+        try:
+            ban_entry = await message.guild.fetch_ban(discord.Object(ban_appeal["id"]))
+        except discord.NotFound:
+            message = EmailMessage()
+            message["From"] = await self.config.guild(message.guild).email()
+            message["To"] = self.email
+            message["Subject"] = "Ballsdex Ban Appeal"
+            contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
+            message.set_content(contents)
+            await aiosmtplib.send(
+                message,
+                recipients=[self.email],
+                hostname="smtp.gmail.com",
+                port=465,
+                username=await self.config.guild(message.guild).email(),
+                password=await self.config.guild(message.guild).password(),
+                use_tls=True,
+            )
+            return
+        ban_appeal_channel = message.guild.get_channel(1184091996932022292)
+        embed = discord.Embed(
+            title=f"Ban Appeal for {ban_appeal['name']}",
+            description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
+
+        )
+        content = ""
+        admin_search = ID_REGEX.findall(ban_entry.reason)
+        if admin_search:
+            admin = message.guild.get_member(int(admin_search[0]))
+            content = admin.mention
+        else:
+            admin = None
+            content = "<@1049119446372986921> <@718365766671663144>"
+        await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin))
+
+    @commands.is_owner()
+    @commands.command()
+    async def bancheck(self, ctx, amount: int = 100):
+        """Check for ban appeals."""
+        ban_appeal_channel = ctx.guild.get_channel(1184084842405707828)
+        async for message in ban_appeal_channel.history(limit=amount):
+            self.handle_req(message)
+
 
     # --- Events ---
     @commands.Cog.listener()
     async def on_message(self, message):
         """Add a reaction to messages with attachments or links for art contest."""
         if message.channel.id == 1184084842405707828:
-            try:
-                ban_appeal = json.loads(message.content)
-            except json.JSONDecodeError:
-                return
-            # check if user is banned
-            # if not, return
-            # if so, send message to ban-appeals channel
-            try:
-                ban_entry = await message.guild.fetch_ban(discord.Object(ban_appeal["id"]))
-            except discord.NotFound:
-                message = EmailMessage()
-                message["From"] = await self.config.guild(message.guild).email()
-                message["To"] = self.email
-                message["Subject"] = "Ballsdex Ban Appeal"
-                contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
-                message.set_content(contents)
-                await aiosmtplib.send(
-                    message,
-                    recipients=[self.email],
-                    hostname="smtp.gmail.com",
-                    port=465,
-                    username=await self.config.guild(message.guild).email(),
-                    password=await self.config.guild(message.guild).password(),
-                    use_tls=True,
-                )
-                return
-            ban_appeal_channel = message.guild.get_channel(1184091996932022292)
-            embed = discord.Embed(
-                title=f"Ban Appeal for {ban_appeal['name']}",
-                description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
-
-            )
-            content = ""
-            admin_search = ID_REGEX.findall(ban_entry.reason)
-            if admin_search:
-                admin = message.guild.get_member(int(admin_search[0]))
-                content = admin.mention
-            else:
-                admin = None
-                content = "<@1049119446372986921> <@718365766671663144>"
-            await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin))
+            handle_req(message)
             return
 
         if message.channel.id != 1177735598275035157: # Art channel.
