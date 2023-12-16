@@ -501,7 +501,7 @@ class UnbanPrompt(Modal, title=f"Unban Appeal"):
             "unban",
             self.ban.user,
             self.interaction.user,
-            self.reason.value,
+            f"Unban appeal accepted by {interaction.user}",
         )
         await send_email(self.email, f"Your ban appeal for {interaction.guild} has been accepted. You have been unbanned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email.", self.cog, interaction.guild)
         # remove buttons from original interaction
