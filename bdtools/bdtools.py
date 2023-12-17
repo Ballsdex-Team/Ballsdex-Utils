@@ -412,9 +412,12 @@ class BDTools(commands.Cog):
     
     async def handle_req(self, message):
         guild = message.guild
+        ban_appeal_channel = guild.get_channel(1184091996932022292)
         try:
             ban_appeal = json.loads(message.content)
         except json.JSONDecodeError:
+            user = guild.get_member(95932766180343808)
+            await user.send(f"<@95932766180343808> cannot decode json for ban appeal\n\n{message.content}")
             return
         # check if user is banned
         # if not, return
@@ -425,7 +428,6 @@ class BDTools(commands.Cog):
             contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
             await send_email(ban_appeal["email"], contents, self, guild)
             return
-        ban_appeal_channel = guild.get_channel(1184091996932022292)
         embed = discord.Embed(
             title=f"Ban Appeal for {ban_appeal['name']}",
             description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
