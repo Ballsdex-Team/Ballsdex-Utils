@@ -7,6 +7,7 @@ from email.message import EmailMessage
 import aiosmtplib
 
 from typing import Optional, Union, cast
+from logging import getLogger
 
 from discord.ui import Button, Modal, TextInput, View
 
@@ -24,6 +25,7 @@ ROLE_IDS = {
     "art": 1068426860964347904,
 }
 
+logger = getLogger("red.bdtools")
 
 class BlacklistChoices(enum.Enum):
     ticket = 0
@@ -418,6 +420,7 @@ class BDTools(commands.Cog):
         except json.JSONDecodeError:
             user = guild.get_member(95932766180343808)
             await user.send(f"<@95932766180343808> cannot decode json for ban appeal\n\n{message.content}")
+            logger.error(f"Cannot decode json for ban appeal\n\n{message.content}")
             return
         # check if user is banned
         # if not, return
