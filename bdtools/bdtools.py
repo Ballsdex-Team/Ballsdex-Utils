@@ -41,7 +41,7 @@ class BDTools(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
         self.config.register_guild(log_channel=None, email=None, password=None, appeals={})
-        self.bot.add_view(UnbanView(None, None, None, bot, self))
+        self.bot.add_view(UnbanView(None, bot, self))
 
     async def maybe_send_logs(
         self,
@@ -437,10 +437,9 @@ class BDTools(commands.Cog):
             admin = message.guild.get_member(int(admin_search[0]))
             content = admin.mention
         else:
-            admin = None
             content = "<@&1049119786988212296> <@&1049119446372986921>"
         allowed_mentions = discord.AllowedMentions(everyone=False, roles=True, users=True)
-        msg = await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, ban_entry, ban_appeal["email"], self.bot, self, admin), allowed_mentions=allowed_mentions)
+        msg = await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, self.bot, self), allowed_mentions=allowed_mentions)
         async with self.config.guild(guild).appeals() as appeals:
             appeals[str(msg.id)] = ban_appeal
 
@@ -551,13 +550,14 @@ class UnbanView(View):
     def __init__(self, interaction: discord.Interaction, ban, email, bot, cog, admin = None):
         super().__init__(timeout=None)
         self.interaction = interaction
-        self.ban = ban
-        self.email = email
+        self.ban = None
+        self.email = None
         self.bot = bot
         self.cog = cog
-        self.admin = int(admin.id) if admin is not None else None
+        self.admin = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        await self.get_data(interaction)
         if 1049119446372986921 in [x.id for x in interaction.user.roles] or 718365766671663144 not in [x.id for x in interaction.user.roles]:
             return True
         if (self.admin is not None and interaction.user.id != self.admin):
@@ -566,22 +566,24 @@ class UnbanView(View):
             )
             return False
         return True
+    
+    async def get_data(self, interaction: discord.Interaction):
+        message = interaction.message
+        async with self.cog.config.guild(interaction.guild).appeals() as appeals:
+            appeal = appeals[str(message.id)]
+        self.email = appeal["email"]
+        self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
+        admin_search = ID_REGEX.findall(self.ban.reason)
+        if admin_search:
+            self.admin = message.guild.get_member(int(admin_search[0]))
+        else:
+            self.admin = None
 
     @discord.ui.button(
         style=discord.ButtonStyle.success, label="Unban User", custom_id="unban_button"
     )
     async def confirm_button(self, interaction: discord.Interaction, button: Button):
-        if self.email is None:
-            message = interaction.message
-            async with self.cog.config.guild(interaction.guild).appeals() as appeals:
-                appeal = appeals[str(message.id)]
-            self.email = appeal["email"]
-            self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
-            admin_search = ID_REGEX.findall(self.ban.reason)
-            if admin_search:
-                self.admin = message.guild.get_member(int(admin_search[0]))
-            else:
-                self.admin = None
+        await self.get_data(interaction)
         await interaction.response.send_modal(UnbanPrompt(interaction, button, self.ban, self.email, self.bot, self.cog))
 
     @discord.ui.button(
@@ -590,10 +592,5 @@ class UnbanView(View):
         custom_id="reject-button"
     )
     async def cancel_button(self, interaction: discord.Interaction, button: Button):
-       if self.email is None:
-            message = interaction.message
-            async with self.cog.config.guild(interaction.guild).appeals() as appeals:
-                appeal = appeals[str(message.id)]
-            self.email = appeal["email"]
-            self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
+       await self.get_data(interaction)
        await interaction.response.send_modal(UnbanDenyPrompt(interaction, button, self.ban, self.email, self.cog))
