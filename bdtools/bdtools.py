@@ -492,7 +492,7 @@ class UnbanPrompt(Modal, title=f"Unban Appeal"):
             await interaction.response.send_message(f"{interaction.user.mention} has not unbanned {self.ban.user} because they did not confirm.", ephemeral=True)
             return
         await interaction.guild.unban(self.ban.user, reason=self.reason.value)
-        await interaction.response.send_message(f"{interaction.user.mention} has unbanned {self.ban.user}.")
+        await interaction.response.send_message(f"{interaction.user.mention} has unbanned {self.ban.user}.", ephemeral=True)
         await modlog.create_case(
             self.bot,
             interaction.guild,
@@ -504,7 +504,7 @@ class UnbanPrompt(Modal, title=f"Unban Appeal"):
         )
         await send_email(self.email, f"Your ban appeal for {interaction.guild} has been accepted. You have been unbanned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email.", self.cog, interaction.guild)
         # remove buttons from original interaction
-        await self.interaction.message.edit(view=None)
+        await self.interaction.message.edit(view=None, content=f"{self.interaction.message.content}\n\n{interaction.user.mention} has unbanned this user.")
 
 async def send_email(email, contents, cog, guild):
     message = EmailMessage()
@@ -538,12 +538,12 @@ class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
 
 
     async def on_submit(self, interaction):
-        await interaction.response.send_message(f"{interaction.user.mention} has denied {self.ban.user}'s appeal for {self.reason.value}.")
+        await interaction.response.send_message(f"{interaction.user.mention} has denied {self.ban.user}'s appeal for {self.reason.value}.", ephemeral=True)
   
         contents = f"Your ban appeal for {interaction.guild} has been denied for the following reason: {self.reason.value}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
         await send_email(self.email, contents, self.cog, interaction.guild)
         # # remove buttons from original interaction
-        await self.interaction.message.edit(view=None)
+        await self.interaction.message.edit(view=None, content=f"{self.interaction.message.content}\n\n{interaction.user.mention} has denied this appeal for the following reason: {self.reason.value}")
 
 
 class UnbanView(View):
