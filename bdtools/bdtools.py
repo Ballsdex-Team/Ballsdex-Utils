@@ -547,7 +547,7 @@ class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
 
 
 class UnbanView(View):
-    def __init__(self, interaction: discord.Interaction, ban, email, bot, cog, admin = None):
+    def __init__(self, interaction: discord.Interaction, bot, cog):
         super().__init__(timeout=None)
         self.interaction = interaction
         self.ban = None
