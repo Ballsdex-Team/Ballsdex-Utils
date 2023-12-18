@@ -415,8 +415,17 @@ class BDTools(commands.Cog):
     async def handle_req(self, message):
         guild = message.guild
         ban_appeal_channel = guild.get_channel(1184091996932022292)
+        ban_appeal = {}
+        if message.content == "{{Email Address}},{{Discord ID}},{{Discord Name}},{{Banning Admin}},{{Reason for ban}},{{Why should we unban you?}}":
+            return
         try:
-            ban_appeal = json.loads(message.content)
+            split = message.content.split(",")
+            ban_appeal["email"] = split[0]
+            ban_appeal["id"] = split[1]
+            ban_appeal["name"] = split[2]
+            ban_appeal["admin"] = split[3]
+            ban_appeal["reason"] = split[4]
+            ban_appeal["msg"] = split[5]
         except json.JSONDecodeError:
             user = guild.get_member(95932766180343808)
             await user.send(f"<@95932766180343808> cannot decode json for ban appeal\n\n{message.content}")
