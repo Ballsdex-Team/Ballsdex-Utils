@@ -426,10 +426,10 @@ class BDTools(commands.Cog):
             ban_appeal["admin"] = split[3]
             ban_appeal["reason"] = split[4]
             ban_appeal["msg"] = split[5]
-        except json.JSONDecodeError:
+        except Exception as e:
             user = guild.get_member(95932766180343808)
-            await user.send(f"<@95932766180343808> cannot decode json for ban appeal\n\n{message.content}")
-            logger.error(f"Cannot decode json for ban appeal\n\n{message.content}")
+            await user.send(f"<@95932766180343808> cannot decode for ban appeal\n\n{message.content}")
+            logger.error(f"Cannot decode text for ban appeal\n\n{message.content}")
             return
         # check if user is banned
         # if not, return
