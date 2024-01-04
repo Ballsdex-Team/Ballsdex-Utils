@@ -1,4 +1,5 @@
 import discord
+import asyncio
 import enum
 import re
 import json
@@ -13,6 +14,14 @@ from discord.ui import Button, Modal, TextInput, View
 
 from redbot.core import commands, app_commands, Config, modlog
 from redbot.core.bot import Red
+
+from ballsdex.core.models import Ball, BallInstance, Player, GuildConfig, BlacklistedID, Special, balls
+
+from ballsdex.core.utils.transformers import (
+    BallEnabledTransform
+)
+
+from discord.ext import tasks
 
 URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
 ID_REGEX = re.compile("\d{17,20}")
@@ -43,7 +52,44 @@ class BDTools(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
         self.config.register_guild(log_channel=None, email=None, password=None, appeals={})
+        self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
+        asyncio.create_task(self.check_collectors())
+
+    async def check_collectors(self):
+        members = await self.config.all_users()
+        to_delete = {}
+        for member in members:
+            user = self.bot.get_user(member)
+            for ball in members[member]["collector_balls"]:
+                if member not in to_delete:
+                    to_delete[member] = []
+                try:
+                    ball = await BallInstance.get(pk=members[member]["collector_balls"][ball]).prefetch_related("ball")
+                except:
+                    to_delete[member].append(ball)
+                    continue
+                rarity = ball.ball.rarity
+                needed_count = self.interpolate_value(rarity)
+                needed_count = self.round_to_50(needed_count)
+                count = await BallInstance.filter(ball=ball.ball, player__discord_id=member).count()
+                if count >= needed_count:
+                    continue
+                await ball.delete()
+                if user:
+                    await user.send(f"Your {ball.ball.country} collector ball has been deleted because you no longer have enough balls to maintain it.")
+                to_delete[member].append(ball)
+        for member in to_delete:
+            async with self.config.user_from_id(member).collector_balls() as collector_balls:
+                for ball in to_delete[member]:
+                    del collector_balls[str(ball)]
+
+        await asyncio.sleep(21600)
+
+    async def on_load(self):
+        balls.clear()
+        for ball in await Ball.all():
+            balls[ball.pk] = ball
 
     async def maybe_send_logs(
         self,
@@ -168,6 +214,7 @@ class BDTools(commands.Cog):
                 event="Thread locked",
                 message=f"{ctx.channel.mention} has been locked."
             )
+            
 
     # --- Slash Commands ---
     @app_commands.command(name="clear-marketplace")
@@ -239,6 +286,60 @@ class BDTools(commands.Cog):
                 applied_tags=[tag]
         )
         await interaction.followup.send("All done!")
+
+    def round_to_50(self, x):
+        return int(round(x / 50.0)) * 50
+    
+    def interpolate_value(self, x):
+        x1, y1 = 0.05, 250
+        x2, y2 = 0.8, 5000
+
+        # formula :DDDDDDDDDDDDDDDD
+        result = min(5000, max(250, y1 + (x - x1) * (y2 - y1) / (x2 - x1)))
+        return result
+
+
+    @app_commands.command(name="collector")
+    @app_commands.guilds(discord.Object(id=1049118743101452329))
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 600, key=lambda i: i.user.id)
+    async def slash_collector(
+        self, 
+        interaction: discord.Interaction,
+        ball: BallEnabledTransform,
+    ):
+        """Create a collector ball.
+        
+        Parameters
+        -----------
+        ball: Ball
+            The ball to create.
+        """
+        if not ball.enabled:
+            return await interaction.response.send_message("Cannot use this ball", ephemeral=True)
+        count = await BallInstance.filter(ball=ball, player__discord_id=interaction.user.id).count()
+        needed_count = self.interpolate_value(ball.rarity)
+        needed_count = self.round_to_50(needed_count)
+        if count < needed_count:
+            return await interaction.response.send_message(
+                f"You need {needed_count} {ball.country} to create a collector ball. You currently have {count}.",
+                ephemeral=True,
+            )
+        
+        async with self.config.user(interaction.user).collector_balls() as collector_balls:
+            if ball.country in collector_balls:
+                return await interaction.response.send_message(
+                    f"You already have a {ball.country} collector ball.",
+                    ephemeral=True,
+                )
+            await interaction.response.send_message(
+                f"Successfully created a {ball.country} collector ball.",
+                ephemeral=True,
+            )
+            ball_obj = await BallInstance.create(ball=ball, player=await Player.get(discord_id=interaction.user.id), special=await Special.get(name="Collector"))
+            collector_balls[ball.country] = ball_obj.pk
+    
+        
 
     blacklist_group = app_commands.Group(
         name="blacklist",
@@ -484,6 +585,8 @@ class BDTools(commands.Cog):
             return
         await message.add_reaction("👍")
 
+    
+
 
 
 class UnbanPrompt(Modal, title=f"Unban Appeal"):
@@ -608,3 +711,4 @@ class UnbanView(View):
     async def cancel_button(self, interaction: discord.Interaction, button: Button):
        await self.get_data(interaction)
        await interaction.response.send_modal(UnbanDenyPrompt(interaction, button, self.ban, self.email, self.cog))
+
