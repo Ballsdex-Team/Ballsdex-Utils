@@ -51,7 +51,7 @@ class BDTools(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
-        self.config.register_guild(log_channel=None, email=None, password=None, appeals={}, blacklised_appeals={}, max=5000, min=250)
+        self.config.register_guild(log_channel=None, email=None, password=None, appeals={}, blacklised_appeals={}, max=5000, min=250, pinned_thread=None)
         self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
         asyncio.create_task(self.check_collectors())
@@ -242,6 +242,12 @@ class BDTools(commands.Cog):
             )
 
         await interaction.response.defer(thinking=True, ephemeral=True)
+        pinned_thread_conf = await self.config.guild(interaction.guild).pinned_thread()
+        if pinned_thread_conf is not None:
+            channel = interaction.guild.get_channel(1092534995605782678)
+            pinned_thread_obj = await channel.get_thread(pinned_thread_conf)
+            if pinned_thread_obj is not None:
+                await pinned_thread_obj.edit(locked=True, archived=True)
         # This better not take 15 minutes!
         overwrite = discord.PermissionOverwrite()
         overwrite.send_messages = False
@@ -283,6 +289,7 @@ class BDTools(commands.Cog):
                 applied_tags=[tag]
         )
         await trade.thread.edit(pinned=True)
+        await self.config.guild(interaction.guild).pinned_thread.set(trade.id)
         await marketplace.create_thread(
                 name="Ask for Ball",
                 content="Ask for balls below, any duplicate threads will be deleted..",
