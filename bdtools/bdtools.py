@@ -470,12 +470,18 @@ class BDTools(commands.Cog):
     async def slash_blacklist_appeal(
         self,
         interaction: discord.Interaction,
-        user_id: int,
+        user_id: str,
         reason: str,
     ) -> None:
         """
         Blacklist a member from appealing."""
         await interaction.response.defer(thinking=True, ephemeral=True)
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            return await interaction.followup.send(
+                "Invalid user ID. Please try again.", ephemeral=True
+            )
         await interaction.followup.send(
             f"Successfully blacklisted `{user_id}` from appealing."
         )
@@ -573,6 +579,7 @@ class BDTools(commands.Cog):
         if ban_appeal["id"] in blacklisted_app:
             contents = f"You have been blacklisted from appealing for the following reason(s): {blacklisted_app[ban_appeal['id']]}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
             await send_email(ban_appeal["email"], contents, self, guild)
+            await ban_appeal_channel.send(f"{ban_appeal['name']}-{ban_appeal['id']} (Reason: {ban_entry.reason}) has appealed but is blacklisted from appealing for the following reason(s): {blacklisted_app[ban_appeal['id']]}")
             return
         embed = discord.Embed(
             title=f"Ban Appeal for {ban_appeal['name']}",
