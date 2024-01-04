@@ -476,10 +476,6 @@ class BDTools(commands.Cog):
         """
         Blacklist a member from appealing."""
         await interaction.response.defer(thinking=True, ephemeral=True)
-        if any(role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102] for role in user.roles):
-            return await interaction.followup.send(
-                "You're not allowed to blacklist a moderator or administrator."
-            )
         await interaction.followup.send(
             f"Successfully blacklisted `{user_id}` from appealing."
         )
