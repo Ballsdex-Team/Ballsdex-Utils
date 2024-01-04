@@ -289,7 +289,7 @@ class BDTools(commands.Cog):
                 applied_tags=[tag]
         )
         await trade.thread.edit(pinned=True)
-        await self.config.guild(interaction.guild).pinned_thread.set(trade.id)
+        await self.config.guild(interaction.guild).pinned_thread.set(trade.thread.id)
         await marketplace.create_thread(
                 name="Ask for Ball",
                 content="Ask for balls below, any duplicate threads will be deleted..",
