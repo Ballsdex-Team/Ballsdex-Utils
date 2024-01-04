@@ -51,7 +51,7 @@ class BDTools(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
-        self.config.register_guild(log_channel=None, email=None, password=None, appeals={})
+        self.config.register_guild(log_channel=None, email=None, password=None, appeals={}, blacklised_appeals={})
         self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
         asyncio.create_task(self.check_collectors())
@@ -463,6 +463,38 @@ class BDTools(commands.Cog):
             ),
         )
 
+    @blacklist_group.command(
+        name="appeal",
+        description="Blacklist a member from appealing.",
+    )
+    async def slash_blacklist_appeal(
+        self,
+        interaction: discord.Interaction,
+        user_id: int,
+        reason: str,
+    ) -> None:
+        """
+        Blacklist a member from appealing."""
+        await interaction.response.defer(thinking=True, ephemeral=True)
+        if any(role.id in [1049119786988212296, 1073776116898218036, 1073775485840003102] for role in user.roles):
+            return await interaction.followup.send(
+                "You're not allowed to blacklist a moderator or administrator."
+            )
+        await interaction.followup.send(
+            f"Successfully blacklisted `{user_id}` from appealing."
+        )
+        await self.maybe_send_logs(
+            guild=interaction.guild,
+            mod=interaction.user,
+            event="Member appeal blacklisted",
+            message=(
+                f"{user_id} has been blacklisted from appealing.\n"
+                f"Reason: {reason}"
+            ),
+        )
+        async with self.config.guild(interaction.guild).blacklised_appeals() as blacklised_appeals:
+            blacklised_appeals[str(user_id)] = reason
+
     # thread_group = app_commands.Group(
     #     name="thread",
     #     description="Various thread actions.",
@@ -539,6 +571,11 @@ class BDTools(commands.Cog):
             ban_entry = await guild.fetch_ban(discord.Object(ban_appeal["id"]))
         except discord.NotFound:
             contents = "The user you are appealing for is not banned. Please appeal for a user that is banned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
+            await send_email(ban_appeal["email"], contents, self, guild)
+            return
+        blacklisted_app = await self.config.guild(guild).blacklised_appeals()
+        if ban_appeal["id"] in blacklisted_app:
+            contents = f"You have been blacklisted from appealing for the following reason(s): {blacklisted_app[ban_appeal['id']]}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
             await send_email(ban_appeal["email"], contents, self, guild)
             return
         embed = discord.Embed(
