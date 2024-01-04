@@ -245,7 +245,7 @@ class BDTools(commands.Cog):
         pinned_thread_conf = await self.config.guild(interaction.guild).pinned_thread()
         if pinned_thread_conf is not None:
             channel = interaction.guild.get_channel(1092534995605782678)
-            pinned_thread_obj = await channel.get_thread(pinned_thread_conf)
+            pinned_thread_obj = channel.get_thread(pinned_thread_conf)
             if pinned_thread_obj is not None:
                 await pinned_thread_obj.edit(locked=True, archived=True)
         # This better not take 15 minutes!
