@@ -51,7 +51,7 @@ class BDTools(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
-        self.config.register_guild(log_channel=None, email=None, password=None, appeals={}, blacklised_appeals={})
+        self.config.register_guild(log_channel=None, email=None, password=None, appeals={}, blacklised_appeals={}, max=5000, min=250)
         self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
         asyncio.create_task(self.check_collectors())
@@ -59,6 +59,8 @@ class BDTools(commands.Cog):
     async def check_collectors(self):
         members = await self.config.all_users()
         to_delete = {}
+        maxi = await self.config.guild_from_id(1049118743101452329).max()
+        mini = await self.config.guild_from_id(1049118743101452329).min()
         for member in members:
             user = self.bot.get_user(member)
             for ball in members[member]["collector_balls"]:
@@ -70,7 +72,8 @@ class BDTools(commands.Cog):
                     to_delete[member].append(ball)
                     continue
                 rarity = ball.ball.rarity
-                needed_count = self.interpolate_value(rarity)
+
+                needed_count = self.interpolate_value(maxi, mini, rarity)
                 needed_count = self.round_to_50(needed_count)
                 count = await BallInstance.filter(ball=ball.ball, player__discord_id=member).count()
                 if count >= needed_count:
@@ -290,12 +293,13 @@ class BDTools(commands.Cog):
     def round_to_50(self, x):
         return int(round(x / 50.0)) * 50
     
-    def interpolate_value(self, x):
-        x1, y1 = 0.05, 250
-        x2, y2 = 0.8, 5000
+    def interpolate_value(self, maximum, minimum, x):
+
+        x1, y1 = 0.05, minimum
+        x2, y2 = 0.8, maximum
 
         # formula :DDDDDDDDDDDDDDDD
-        result = min(5000, max(250, y1 + (x - x1) * (y2 - y1) / (x2 - x1)))
+        result = min(maximum, max(minimum, y1 + (x - x1) * (y2 - y1) / (x2 - x1)))
         return result
 
 
@@ -318,7 +322,9 @@ class BDTools(commands.Cog):
         if not ball.enabled:
             return await interaction.response.send_message("Cannot use this ball", ephemeral=True)
         count = await BallInstance.filter(ball=ball, player__discord_id=interaction.user.id).count()
-        needed_count = self.interpolate_value(ball.rarity)
+        maxi = await self.config.guild(interaction.guild).max()
+        mini = await self.config.guild(interaction.guild).min()
+        needed_count = self.interpolate_value(maxi, mini, ball.rarity)
         needed_count = self.round_to_50(needed_count)
         if count < needed_count:
             return await interaction.response.send_message(
