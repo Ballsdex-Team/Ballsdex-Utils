@@ -99,7 +99,7 @@ class Boss(commands.Cog):
             view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
             message = await channel.send("Boss round started!", view=view)
             self.message = message
-            await asyncio.sleep(60)
+            await asyncio.sleep(180)
             self.joinable = False
             await message.delete()
             loading_msg = await channel.send("Round over, damage is being calculated...")
@@ -143,7 +143,7 @@ class Boss(commands.Cog):
         # Choose a random boss
         boss = random.choice(bosses)
         #choose a random hp
-        hp = random.randint(50000, 75000)
+        hp = random.randint(75000, 35000)
         # Set the boss
         self.boss = boss
         # Set the boss hp
@@ -174,6 +174,7 @@ class Boss(commands.Cog):
         # loop through the entries and pick a random ball from each entry to attack the boss
         attack_msg = "The boss has been attacked! The following balls have attacked the boss: \n"
         log.info("Attacking boss")
+        total_atk = 0
         for entry in self.boss_entries:
             # Choose a random ball from the entry
             balls = await BallInstance.filter(player__discord_id=entry[0]).prefetch_related("ball")
@@ -187,10 +188,12 @@ class Boss(commands.Cog):
             self.boss_hp -= attack
             # Add the ball to the attack message
             attack_msg += f"{user.display_name}'s {ball.ball} attacked the boss for {attack} damage!\n"
+            total_atk += attack
             if self.boss_hp <= 0:
                 defeated = user
                 attack_msg += f"The boss has been defeated! {ball.ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
                 break
+        attack_msg = f"Your balls have attacked the boss for {total_atk} damage!\n" + attack_msg
         log.info("Attacked boss")
         # Send the attack message
         file = BytesIO(attack_msg.encode("utf-8"))
