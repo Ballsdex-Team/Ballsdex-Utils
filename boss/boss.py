@@ -106,7 +106,7 @@ class Boss(commands.Cog):
             log.info("Round over, damage is being calculated...")
             if random.randint(0, 100) < 90:
                 log.info("Killing entries")
-                await self.end_round(interaction, channel, random.randint(0, len(self.boss_entries) / 5))
+                await self.end_round(interaction, channel, random.randint(0, int(len(self.boss_entries) / 5)))
             else:
                 log.info("Not killing entries")
                 await self.end_round(interaction, channel)
