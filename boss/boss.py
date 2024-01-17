@@ -91,19 +91,20 @@ class Boss(commands.Cog):
         if self.boss is None:
             await interaction.response.send_message("There is no boss chosen.", ephemeral=True)
             return
+        channel = interaction.guild.get_channel(1053050428683714642)
         while self.boss_hp > 0:
             self.joinable = True
             view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
-            message = await interaction.response.send_message("Boss round started!", view=view)
+            message = await channel.send("Boss round started!", view=view)
             self.message = message
             await asyncio.sleep(300)
             self.joinable = False
             await message.delete()
             if random.randint(0, 100) < 90:
                 # 20 of boss entries die
-                await self.end_round(interaction, random.randint(0, len(self.boss_entries) / 5))
+                await self.end_round(interaction, channel, random.randint(0, len(self.boss_entries) / 5))
             else:
-                await self.end_round(interaction)
+                await self.end_round(interaction, channel)
             await asyncio.sleep(5)
             
 
@@ -169,7 +170,7 @@ class Boss(commands.Cog):
         # End the round
         await self.end_round(interaction, killed)
 
-    async def end_round(self, interaction: discord.Interaction, killed: int = 0):
+    async def end_round(self, interaction: discord.Interaction, channel, killed: int = 0):
         self.joinable = False
         await interaction.response.defer(thinking=True)
         defeated = False
@@ -195,7 +196,7 @@ class Boss(commands.Cog):
         # Send the attack message
         file = BytesIO(attack_msg.encode("utf-8"))
         if defeated:
-            await interaction.followup.send(file=discord.File(file, "attack.txt"), content=f"{defeated.mention} has won the boss battle!")
+            await channel.send(file=discord.File(file, "attack.txt"), content=f"{defeated.mention} has won the boss battle!")
         else:
             content = ""
             if killed > 0:
@@ -211,7 +212,7 @@ class Boss(commands.Cog):
                 content += "The following people have died:\n"
                 for dead in dead_list:
                     content += f"<@{dead[0]}>\n"
-            await interaction.followup.send(content=content, file=discord.File(file, "attack.txt"))
+            await channel.send(content=content, file=discord.File(file, "attack.txt"))
             # reset entries
             self.boss_entries = []
             self.joinable = True
