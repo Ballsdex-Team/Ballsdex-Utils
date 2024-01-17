@@ -24,20 +24,13 @@ log = logging.getLogger("red.flare.boss")
 roles = [1049119446372986921]
 class BossView(View):
     def __init__(self, interaction: discord.Interaction, entry_list, dead_list, joinable):
-        super().__init__(timeout=300)
+        super().__init__(timeout=None)
         self.value = None
         self.interaction = interaction
         self.entry_list = entry_list
         self.dead_list = dead_list
         self.joinable = joinable
 
-    async def on_timeout(self):
-        for item in self.children:
-            item.disabled = True  # type: ignore
-        try:
-            await self.interaction.response.send_message("@original", view=self)  # type: ignore
-        except discord.NotFound:
-            pass
 
     @discord.ui.button(
         style=discord.ButtonStyle.success, label="Join"
@@ -143,7 +136,7 @@ class Boss(commands.Cog):
         # Choose a random boss
         boss = random.choice(bosses)
         #choose a random hp
-        hp = random.randint(75000, 35000)
+        hp = random.randint(75000, 350000)
         # Set the boss
         self.boss = boss
         # Set the boss hp
