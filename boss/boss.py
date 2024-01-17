@@ -97,7 +97,7 @@ class Boss(commands.Cog):
             await message.delete()
             loading_msg = await channel.send("Round over, damage is being calculated...")
             log.info("Round over, damage is being calculated...")
-            if random.randint(0, 100) < 90:
+            if random.randint(0, 100) > 80:
                 log.info("Killing entries")
                 await self.end_round(interaction, channel, random.randint(0, int(len(self.boss_entries) / 5)))
             else:
