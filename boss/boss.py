@@ -19,7 +19,7 @@ from io import BytesIO
 if TYPE_CHECKING:
     from ballsdex.core.bot import BallsDexBot
 
-log = logging.getLogger("ballsdex.packages.boss")
+log = logging.getLogger("red.flare.boss")
 
 roles = [1049119446372986921]
 class BossView(View):
@@ -91,7 +91,9 @@ class Boss(commands.Cog):
         if self.boss is None:
             await interaction.response.send_message("There is no boss chosen.", ephemeral=True)
             return
+        await interaction.response.send_message("Starting boss battle...", ephemeral=True)
         channel = interaction.guild.get_channel(1053050428683714642)
+        log.info("Starting boss battle")
         while self.boss_hp > 0:
             self.joinable = True
             view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
@@ -100,11 +102,15 @@ class Boss(commands.Cog):
             await asyncio.sleep(300)
             self.joinable = False
             await message.delete()
+            loading_msg = await channel.send("Round over, damage is being calculated...")
+            log.info("Round over, damage is being calculated...")
             if random.randint(0, 100) < 90:
-                # 20 of boss entries die
+                log.info("Killing entries")
                 await self.end_round(interaction, channel, random.randint(0, len(self.boss_entries) / 5))
             else:
+                log.info("Not killing entries")
                 await self.end_round(interaction, channel)
+            await loading_msg.delete()
             await asyncio.sleep(5)
             
 
@@ -161,21 +167,13 @@ class Boss(commands.Cog):
             base += 1500
         return base
 
-    @boss.command()
-    @app_commands.checks.has_any_role(*roles)
-    async def endround(self, interaction: discord.Interaction, killed: int = 0):
-        """
-        End the round.
-        """
-        # End the round
-        await self.end_round(interaction, killed)
-
     async def end_round(self, interaction: discord.Interaction, channel, killed: int = 0):
         self.joinable = False
         await interaction.response.defer(thinking=True)
         defeated = False
         # loop through the entries and pick a random ball from each entry to attack the boss
         attack_msg = "The boss has been attacked! The following balls have attacked the boss: \n"
+        log.info("Attacking boss")
         for entry in self.boss_entries:
             # Choose a random ball from the entry
             balls = await BallInstance.filter(player__discord_id=entry[0]).prefetch_related("ball")
@@ -193,6 +191,7 @@ class Boss(commands.Cog):
                 defeated = user
                 attack_msg += f"The boss has been defeated! {ball.ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
                 break
+        log.info("Attacked boss")
         # Send the attack message
         file = BytesIO(attack_msg.encode("utf-8"))
         if defeated:
@@ -212,6 +211,7 @@ class Boss(commands.Cog):
                 content += "The following people have died:\n"
                 for dead in dead_list:
                     content += f"<@{dead[0]}>\n"
+            log.info("Sending attack message")
             await channel.send(content=content, file=discord.File(file, "attack.txt"))
             # reset entries
             self.boss_entries = []
@@ -232,7 +232,7 @@ class Boss(commands.Cog):
     @app_commands.checks.has_any_role(*roles)
     async def info(self, interaction: discord.Interaction):
         """
-        Get the stats of the boss.
+        Information on how many balls are entered and how many are dead.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
         # Send a message with the how many are enterted and how many are dead
