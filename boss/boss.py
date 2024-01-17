@@ -8,7 +8,7 @@ import discord
 from redbot.core import commands, app_commands
 
 from ballsdex import __version__ as ballsdex_version
-from ballsdex.core.models import Ball, BallInstance, Blacklist
+from ballsdex.core.models import Ball, BallInstance, BlacklistedID
 from ballsdex.core.models import balls as countryballs
 from ballsdex.core.utils.tortoise import row_count_estimate
 from ballsdex.settings import settings
@@ -46,7 +46,7 @@ class BossView(View):
         if not self.joinable:
             await interaction.response.send_message("The boss battle is not joinable.", ephemeral=True)
             return
-        if await Blacklist.filter(discord_id=interaction.user.id).exists():
+        if await BlacklistedID.filter(discord_id=interaction.user.id).exists():
             await interaction.response.send_message("You are blacklisted and cannot join the boss battle.", ephemeral=True)
             return
         if (interaction.user.id, interaction.user.display_name) in self.dead_list:
