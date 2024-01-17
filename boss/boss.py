@@ -169,7 +169,7 @@ class Boss(commands.Cog):
 
     async def end_round(self, interaction: discord.Interaction, channel, killed: int = 0):
         self.joinable = False
-        await interaction.response.defer(thinking=True)
+        # await interaction.response.defer(thinking=True)
         defeated = False
         # loop through the entries and pick a random ball from each entry to attack the boss
         attack_msg = "The boss has been attacked! The following balls have attacked the boss: \n"
