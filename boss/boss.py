@@ -136,7 +136,7 @@ class Boss(commands.Cog):
         # Choose a random boss
         boss = random.choice(bosses)
         #choose a random hp
-        hp = random.randint(75000, 350000)
+        hp = random.randint(250000, 1000000)
         # Set the boss
         self.boss = boss
         # Set the boss hp
@@ -171,6 +171,8 @@ class Boss(commands.Cog):
         for entry in self.boss_entries:
             # Choose a random ball from the entry
             balls = await BallInstance.filter(player__discord_id=entry[0]).prefetch_related("ball")
+            if len(balls) == 0:
+                continue
             ball = random.choice(balls)
             user = interaction.guild.get_member(entry[0])
             if user is None:
