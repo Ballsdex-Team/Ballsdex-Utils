@@ -1,4 +1,4 @@
 from .boss import Boss
 
-def setup(bot):
-    bot.add_cog(Boss(bot))
+async def setup(bot):
+    await bot.add_cog(Boss(bot))
