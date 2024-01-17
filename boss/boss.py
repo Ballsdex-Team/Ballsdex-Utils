@@ -99,7 +99,7 @@ class Boss(commands.Cog):
             view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
             message = await channel.send("Boss round started!", view=view)
             self.message = message
-            await asyncio.sleep(300)
+            await asyncio.sleep(60)
             self.joinable = False
             await message.delete()
             loading_msg = await channel.send("Round over, damage is being calculated...")
@@ -143,7 +143,7 @@ class Boss(commands.Cog):
         # Choose a random boss
         boss = random.choice(bosses)
         #choose a random hp
-        hp = random.randint(75000, 250000)
+        hp = random.randint(50000, 75000)
         # Set the boss
         self.boss = boss
         # Set the boss hp
