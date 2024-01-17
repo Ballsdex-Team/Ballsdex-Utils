@@ -98,13 +98,13 @@ class Boss(commands.Cog):
             self.message = message
             await asyncio.sleep(300)
             self.joinable = False
+            await message.delete()
             if random.randint(0, 100) < 90:
                 # 20 of boss entries die
                 await self.end_round(interaction, random.randint(0, len(self.boss_entries) / 5))
             else:
                 await self.end_round(interaction)
             await asyncio.sleep(5)
-            await message.delete()
             
 
     
