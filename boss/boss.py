@@ -104,6 +104,7 @@ class Boss(commands.Cog):
             else:
                 await self.end_round(interaction)
             await asyncio.sleep(5)
+            await message.delete()
             
 
     
