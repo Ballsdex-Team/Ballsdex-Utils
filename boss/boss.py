@@ -338,9 +338,7 @@ class Boss(commands.Cog):
     async def defence_round(self, interaction: discord.Interaction, channel):
         # the boss attacks back against the balls, on defence rounds a user has 20% chance to die
         # loop through the entries and pick a random ball from each entry to attack the boss
-        attack_msg = (
-            "The boss has attacked! The following players have been attacked: \n"
-        )
+        attack_msg = BOSSES[self.boss]["defence_msg"]
         log.info("Attacking balls")
         total_atk = 0
         to_die = []
@@ -360,9 +358,7 @@ class Boss(commands.Cog):
         # await interaction.response.defer(thinking=True)
         defeated = False
         # loop through the entries and pick a random ball from each entry to attack the boss
-        attack_msg = (
-            "The boss has been attacked! The following balls have attacked the boss: \n"
-        )
+        attack_msg = BOSSES[self.boss]["attack_msg"]
         log.info("Attacking boss")
         total_atk = 0
         for entry in self.boss_entries:
