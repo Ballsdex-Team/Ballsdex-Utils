@@ -242,8 +242,9 @@ class Boss(commands.Cog):
         role = interaction.guild.get_role(1053284063420620850)
         ten_mins = utcnow() + timedelta(minutes=10)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
+        self.joinable = True
         message = await channel.send(
-            f"{role.mention}\nA boss fight has begun, click below to join!\nThis fight will begin in {relative_text}",
+            f"{role.mention}\nA boss fight has begun, click below to join!\nThis fight will begin {relative_text}",
             view=view,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
