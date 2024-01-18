@@ -235,7 +235,7 @@ class Boss(commands.Cog):
         log.info("Starting boss battle")
         view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
         role = interaction.guild.get_role(1053284063420620850)
-        ten_mins = utcnow() + timedelta(minutes=10)
+        ten_mins = utcnow() + timedelta(minutes=3)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
         self.joinable = True
         message = await channel.send(
@@ -243,7 +243,7 @@ class Boss(commands.Cog):
             view=view,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
-        await asyncio.sleep(600)
+        await asyncio.sleep(180)
         self.joinable = False
         await message.edit(content="The boss battle has begun!", view=None)
         while self.boss_hp > 0:
@@ -258,20 +258,20 @@ class Boss(commands.Cog):
             # attack or defence round
             if random.randint(0, 100) > BOSSES[self.boss]["defence_chance"]:
                 log.info("defence round")
-                # attack round
+                await self.defence_round(interaction, channel)
             else:
                 log.info("attack round")
                 if random.randint(0, 100) > 80:
                     log.info("Killing entries")
                     amount = random.randint(1, int(len(self.boss_entries) / 5))
-                    await self.end_round(
+                    await self.attack_round(
                         interaction,
                         channel,
                         amount,
                     )
                 else:
                     log.info("Not killing entries")
-                    await self.end_round(interaction, channel)
+                    await self.attack_round(interaction, channel)
             await loading_msg.delete()
             await asyncio.sleep(300)
 
@@ -358,6 +358,9 @@ class Boss(commands.Cog):
         log.info("Attacking boss")
         total_atk = 0
         for entry in self.boss_entries:
+            user = interaction.guild.get_member(entry[0])
+            if user is None:
+                user = await self.bot.fetch_user(entry[0])
             # Choose a random ball from the entry
             balls = await BallInstance.filter(
                 player__discord_id=entry[0]
@@ -366,11 +369,9 @@ class Boss(commands.Cog):
             for ball in balls:
                 player1set.add(ball.ball)
             if len(player1set) == 0 or len(player1set) < 161:
+                attack_msg += f"{user.display_name} does not have enough balls to attack the boss!\n"
                 continue
             ball = random.choice(balls)
-            user = interaction.guild.get_member(entry[0])
-            if user is None:
-                user = await self.bot.fetch_user(entry[0])
             # Get the ball's attack
             attack = self.get_bonus(ball)
             # Subtract the attack from the boss hp
