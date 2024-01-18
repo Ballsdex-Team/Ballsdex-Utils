@@ -347,6 +347,13 @@ class Boss(commands.Cog):
             if user is None:
                 user = await self.bot.fetch_user(entry[0])
             attack_msg += f"{user.display_name} has died!\n"
+        for entry in to_die:
+            self.boss_entries.remove(entry)
+        io = BytesIO(attack_msg.encode("utf-8"))
+        await channel.send(
+            content=f"{len(to_die)} balls have died!",
+            file=discord.File(io, "attack.txt"),
+        )
 
     async def attack_round(
         self, interaction: discord.Interaction, channel, killed: int = 0
