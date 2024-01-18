@@ -57,9 +57,9 @@ BOSSES = {
     "Antarctica": {
         "attack_msg": "Antarctica has attacked! The following players have been attacked: \n",
         "defence_msg": "Antarctica was attacked! The following balls successfully attacked: \n",
-        "attack_chance": 80,
-        "defence_chance": 20,
-        "kill_chance": 15,
+        "attack_chance": 90,
+        "defence_chance": 10,
+        "kill_chance": 2,
     },
     "Austria-Hungary": {
         "attack_msg": "Austria-Hungary has attacked! The following players have been attacked: \n",
@@ -80,7 +80,7 @@ BOSSES = {
         "defence_msg": "The Vatican was attacked! The following balls successfully attacked: \n",
         "attack_chance": 80,
         "defence_chance": 20,
-        "kill_chance": 15,
+        "kill_chance": 3,
     },
     "Russia": {
         "attack_msg": "Russia has attacked! The following players have been attacked: \n",
@@ -101,7 +101,7 @@ BOSSES = {
         "defence_msg": "The Soviet Union was attacked! The following balls successfully attacked: \n",
         "attack_chance": 80,
         "defence_chance": 20,
-        "kill_chance": 5,
+        "kill_chance": 20,
     },
     "Roman Empire": {
         "attack_msg": "The Roman Empire has attacked! The following players have been attacked: \n",
@@ -243,16 +243,16 @@ class Boss(commands.Cog):
         ten_mins = utcnow() + timedelta(minutes=10)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
         message = await channel.send(
-            f"{role.mention}\nA boss fight has begun, click below to join!\nThis fight will begin in {relative_text}", view=view, allowed_mentions=discord.AllowedMentions(roles=True)
+            f"{role.mention}\nA boss fight has begun, click below to join!\nThis fight will begin in {relative_text}",
+            view=view,
+            allowed_mentions=discord.AllowedMentions(roles=True),
         )
         await asyncio.sleep(600)
         self.joinable = False
         await message.edit(content="The boss battle has begun!", view=None)
         while self.boss_hp > 0:
             if len(self.boss_entries) == 0:
-                await channel.send(
-                    "The boss has no balls to attack, the boss has won!"
-                )
+                await channel.send("The boss has no balls to attack, the boss has won!")
                 return
             log.info("Starting round")
             loading_msg = await channel.send(
