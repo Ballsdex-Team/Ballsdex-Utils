@@ -256,7 +256,7 @@ class Boss(commands.Cog):
             )
             log.info("Round over, damage is being calculated...")
             # attack or defence round
-            if random.randint(0, 100) > BOSSES[self.boss]["defence_chance"]:
+            if random.randint(0, 100) < BOSSES[self.boss]["defence_chance"]:
                 log.info("defence round")
                 await self.defence_round(interaction, channel)
             else:
