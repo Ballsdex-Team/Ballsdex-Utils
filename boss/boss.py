@@ -166,17 +166,17 @@ class BossView(View):
                 "You are blacklisted and cannot join the boss battle.", ephemeral=True
             )
             return
-        player1set = set()
-        player1balls = await BallInstance.filter(
-            player__discord_id=interaction.user.id, ball__enbaled=True
-        ).prefetch_related("ball")
-        for ball in player1balls:
-            player1set.add(ball.ball)
-        if len(player1set) == 0 or len(player1set) < 161:
-            await interaction.response.send_message(
-                "You do not have enough balls to join the boss battle.", ephemeral=True
-            )
-            return
+        # player1set = set()
+        # player1balls = await BallInstance.filter(
+        #     player__discord_id=interaction.user.id, ball__enbaled=True
+        # ).prefetch_related("ball")
+        # for ball in player1balls:
+        #     player1set.add(ball.ball)
+        # if len(player1set) == 0 or len(player1set) < 161:
+        #     await interaction.response.send_message(
+        #         "You do not have enough balls to join the boss battle.", ephemeral=True
+        #     )
+        #     return
         if (interaction.user.id, interaction.user.display_name) in self.dead_list:
             await interaction.response.send_message(
                 f"{interaction.user.mention} is dead and cannot rejoin.", ephemeral=True
@@ -362,7 +362,10 @@ class Boss(commands.Cog):
             balls = await BallInstance.filter(
                 player__discord_id=entry[0]
             ).prefetch_related("ball")
-            if len(balls) == 0:
+            player1set = set()
+            for ball in balls:
+                player1set.add(ball.ball)
+            if len(player1set) == 0 or len(player1set) < 161:
                 continue
             ball = random.choice(balls)
             user = interaction.guild.get_member(entry[0])
