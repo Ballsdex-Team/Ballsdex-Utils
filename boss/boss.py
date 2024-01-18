@@ -161,11 +161,6 @@ class BossView(View):
 
     @discord.ui.button(style=discord.ButtonStyle.success, label="Join", emoji="⚔️")
     async def join_button(self, interaction: discord.Interaction, button: Button):
-        if not self.joinable:
-            await interaction.response.send_message(
-                "The boss battle is not joinable.", ephemeral=True
-            )
-            return
         if await BlacklistedID.filter(discord_id=interaction.user.id).exists():
             await interaction.response.send_message(
                 "You are blacklisted and cannot join the boss battle.", ephemeral=True
