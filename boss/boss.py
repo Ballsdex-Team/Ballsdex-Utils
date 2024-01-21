@@ -251,6 +251,7 @@ class Boss(commands.Cog):
         ten_mins = utcnow() + timedelta(minutes=10)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
         self.joinable = True
+        self.stats = {}
         message = await channel.send(
             f"{role.mention}\nA boss fight has begun, click below to join!\nThis fight will begin {relative_text}",
             view=view,
@@ -297,7 +298,7 @@ class Boss(commands.Cog):
             if self.boss_hp > 0:
                 ten_mins = utcnow() + timedelta(minutes=3)
                 relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
-                await channel.send(f"\n*Next round starting* {relative_text}", delete_after=300)
+                await channel.send(f"\n*Next round starting* {relative_text}", delete_after=180)
                 await asyncio.sleep(180)
 
 
