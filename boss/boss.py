@@ -502,8 +502,8 @@ class Boss(commands.Cog):
         await interaction.followup.send(f"The boss has been reset.")
 
     @boss.command()
-    async def stats(self, interaction: discord.Interaction):
-        """Show your damage to the boss."""
+    async def ongoing(self, interaction: discord.Interaction):
+        """Show your damage to the boss in the current fight."""
         if interaction.user.id not in self.stats:
             await interaction.response.send_message(
                 "You have not attacked the boss.", ephemeral=True
@@ -520,3 +520,36 @@ class Boss(commands.Cog):
         await interaction.response.send_message(
             f"You have done {total} damage to the boss.", ephemeral=True, file=file
         )
+    
+    @boss.command()
+    async def stats(self, interaction: discord.Interaction):
+        """Show your stats in boss battles."""
+        entries = await self.config.user_from_id(interaction.user.id).entries()
+        damage = await self.config.user_from_id(interaction.user.id).damage()
+        kills = await self.config.user_from_id(interaction.user.id).kills()
+        deaths = await self.config.user_from_id(interaction.user.id).deaths()
+        await interaction.response.send_message(
+            f"You have entered {entries} times, done {damage} damage, killed {kills} bosses and died {deaths} times.",
+            ephemeral=True,
+        )
+
+    @boss.command()
+    async def leaderboard(self, interaction: discord.Interaction):
+        """Show the leaderboard for boss battles."""
+        await interaction.response.defer(thinking=True)
+        entries = await self.config.all_users()
+        if len(entries) == 0:
+            await interaction.followup.send("There are no entries.")
+            return
+        entries = sorted(entries.items(), key=lambda x: x[1]["damage"], reverse=True)
+        leaderboard = ""
+        for entry in entries:
+            if entry[1]["damage"] == 0:
+                continue
+            user = interaction.guild.get_member(entry[0])
+            if user is None:
+                user = await self.bot.fetch_user(entry[0])
+            leaderboard += f"{user.display_name}: {entry[1]['damage']}\n"
+        io = BytesIO(leaderboard.encode("utf-8"))
+        file = discord.File(io, "leaderboard.txt")
+        await interaction.followup.send(file=file)
