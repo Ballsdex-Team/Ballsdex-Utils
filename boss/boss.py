@@ -535,7 +535,7 @@ class Boss(commands.Cog):
 
     @boss.command()
     @app_commands.choices(
-        policy=[
+        key=[
             app_commands.Choice(name="Kills", value="kills"),
             app_commands.Choice(
                 name="Damage", value="damage"
