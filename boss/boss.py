@@ -257,7 +257,7 @@ class Boss(commands.Cog):
             view=view,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
-        await asyncio.sleep(180)
+        await asyncio.sleep(600)
         self.joinable = False
         await message.edit(content="The boss battle has begun!", view=None)
         for entry in self.boss_entries:
