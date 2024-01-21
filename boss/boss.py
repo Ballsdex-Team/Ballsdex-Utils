@@ -560,4 +560,4 @@ class Boss(commands.Cog):
                 user = await self.bot.fetch_user(user)
             leaderboard += f"{i+1}. {user.display_name}: {users[user.id][key]}\n"
         embed = discord.Embed(title=f"{key.title()} leaderboard", description=leaderboard)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(embed=embed, ephemeral=True)
