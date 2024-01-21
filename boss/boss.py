@@ -5,7 +5,7 @@ import sys
 from typing import TYPE_CHECKING
 
 import discord
-from redbot.core import commands, app_commands
+from redbot.core import commands, app_commands, Config
 
 from ballsdex import __version__ as ballsdex_version
 from ballsdex.core.models import Ball, BallInstance, BlacklistedID
@@ -16,6 +16,8 @@ from discord.ui import Button, View
 from datetime import datetime, timedelta
 from discord.utils import utcnow
 from io import BytesIO
+
+from .phrases import battle_phrases
 
 
 if TYPE_CHECKING:
@@ -158,6 +160,7 @@ class BossView(View):
         self.entry_list = entry_list
         self.dead_list = dead_list
         self.joinable = joinable
+    
 
     @discord.ui.button(style=discord.ButtonStyle.success, label="Join", emoji="⚔️")
     async def join_button(self, interaction: discord.Interaction, button: Button):
@@ -195,6 +198,7 @@ class BossView(View):
                 f"{interaction.user.mention} has joined the boss battle.",
                 ephemeral=True,
             )
+        # edit button label
 
 
 class Boss(commands.Cog):
@@ -211,12 +215,21 @@ class Boss(commands.Cog):
         self.boss_entries = []
         self.boss_dead = []
         self.message = None
+        self.stats = {}
+        self.config = Config.get_conf(
+            None, identifier=1049118743101452329, cog_name="boss"
+        )
+        self.config.register_user(entries=0, damage=0, kills=0, deaths=0)
+
+    boss_management = app_commands.Group(
+        name="bossadmin", description="Boss Management", guild_ids=[1049118743101452329]
+    )
 
     boss = app_commands.Group(
         name="boss", description="Boss management", guild_ids=[1049118743101452329]
     )
 
-    @boss.command()
+    @boss_management.command()
     @app_commands.checks.has_any_role(*roles)
     async def start(self, interaction: discord.Interaction):
         """
@@ -235,7 +248,7 @@ class Boss(commands.Cog):
         log.info("Starting boss battle")
         view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
         role = interaction.guild.get_role(1053284063420620850)
-        ten_mins = utcnow() + timedelta(minutes=3)
+        ten_mins = utcnow() + timedelta(minutes=10)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
         self.joinable = True
         message = await channel.send(
@@ -243,20 +256,26 @@ class Boss(commands.Cog):
             view=view,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
-        await asyncio.sleep(180)
+        await asyncio.sleep(600)
         self.joinable = False
         await message.edit(content="The boss battle has begun!", view=None)
+        for entry in self.boss_entries:
+            boss_entries = await self.config.user_from_id(entry[0]).entries()
+            await self.config.user_from_id(entry[0]).entries.set(boss_entries + 1)
         while self.boss_hp > 0:
             if len(self.boss_entries) == 0:
                 await channel.send("The boss has no balls to attack, the boss has won!")
                 return
+            round_choice = "Defence" if random.randint(0, 100) < BOSSES[self.boss]["defence_chance"] else "Attack"
+            phrase = self.send_random_phrase(round_choice)
+            await channel.send(phrase)
             log.info("Starting round")
             loading_msg = await channel.send(
                 "Round over, damage is being calculated..."
             )
             log.info("Round over, damage is being calculated...")
             # attack or defence round
-            if random.randint(0, 100) < BOSSES[self.boss]["defence_chance"]:
+            if round_choice == "Defence":
                 log.info("defence round")
                 await self.defence_round(interaction, channel)
             else:
@@ -273,9 +292,17 @@ class Boss(commands.Cog):
                     log.info("Not killing entries")
                     await self.attack_round(interaction, channel)
             await loading_msg.delete()
+            ten_mins = utcnow() + timedelta(minutes=5)
+            relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
+            await channel.send(f"\n*Next round starting in* {relative_text}")
             await asyncio.sleep(300)
 
-    @boss.command()
+
+    def send_random_phrase(self, type):
+        phrases = battle_phrases[self.boss][type]
+        return random.choice(phrases)
+
+    @boss_management.command()
     @app_commands.checks.has_any_role(*roles)
     async def choose(self, interaction: discord.Interaction):
         """
@@ -334,11 +361,13 @@ class Boss(commands.Cog):
     async def defence_round(self, interaction: discord.Interaction, channel):
         # the boss attacks back against the balls, on defence rounds a user has 20% chance to die
         # loop through the entries and pick a random ball from each entry to attack the boss
-        attack_msg = BOSSES[self.boss]["defence_msg"]
+        attack_msg = BOSSES[self.boss]["attack_msg"]
         log.info("Attacking balls")
-        total_atk = 0
+
         to_die = []
-        for entry in self.boss_entries:
+        shuffled = self.boss_entries.copy()
+        random.shuffle(shuffled)
+        for entry in shuffled:
             if random.randint(0, 100) > BOSSES[self.boss]["kill_chance"]:
                 continue
             to_die.append(entry)
@@ -347,6 +376,8 @@ class Boss(commands.Cog):
             if user is None:
                 user = await self.bot.fetch_user(entry[0])
             attack_msg += f"{user.display_name} has died!\n"
+            death_count = await self.config.user_from_id(entry[0]).deaths()
+            await self.config.user_from_id(entry[0]).deaths.set(death_count + 1)
         for entry in to_die:
             self.boss_entries.remove(entry)
         io = BytesIO(attack_msg.encode("utf-8"))
@@ -361,10 +392,13 @@ class Boss(commands.Cog):
         # await interaction.response.defer(thinking=True)
         defeated = False
         # loop through the entries and pick a random ball from each entry to attack the boss
-        attack_msg = BOSSES[self.boss]["attack_msg"]
+        attack_msg = BOSSES[self.boss]["defence_msg"]
         log.info("Attacking boss")
         total_atk = 0
-        for entry in self.boss_entries:
+        failed = []
+        entry_list = self.boss_entries.copy()
+        random.shuffle(entry_list)
+        for entry in entry_list:
             user = interaction.guild.get_member(entry[0])
             if user is None:
                 user = await self.bot.fetch_user(entry[0])
@@ -377,6 +411,7 @@ class Boss(commands.Cog):
                 player1set.add(ball.ball)
             if len(player1set) == 0 or len(player1set) < 161:
                 attack_msg += f"{user.display_name} does not have enough balls to attack the boss!\n"
+                failed.append(entry)
                 continue
             ball = random.choice(balls)
             # Get the ball's attack
@@ -384,12 +419,17 @@ class Boss(commands.Cog):
             # Subtract the attack from the boss hp
             self.boss_hp -= attack
             # Add the ball to the attack message
-            attack_msg += f"{user.display_name}'s {ball.ball} attacked the boss for {attack} damage!\n"
+            attack_msg += f"{user.display_name}'s {ball} attacked the boss for {attack} damage!\n"
+            if user.id not in self.stats:
+                self.stats[user.id] = []
+            self.stats[user.id].append((ball, attack))
             total_atk += attack
             if self.boss_hp <= 0:
                 defeated = user
-                attack_msg += f"The boss has been defeated! {ball.ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
+                attack_msg += f"The boss has been defeated! {ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
                 break
+        for entry in failed:
+            self.boss_entries.remove(entry)
         attack_msg = (
             f"Your balls have attacked the boss for {total_atk} damage!\n" + attack_msg
         )
@@ -401,6 +441,14 @@ class Boss(commands.Cog):
                 file=discord.File(file, "attack.txt"),
                 content=f"{defeated.mention} has won the boss battle!",
             )
+            for entry in self.stats:
+                total = 0
+                for stat in self.stats[entry]:
+                    total += stat[1]
+                current = await self.config.user_from_id(entry).damage()
+                await self.config.user_from_id(entry).damage.set(current + total)
+            kill_count = await self.config.user_from_id(defeated.id).kills()
+            await self.config.user_from_id(defeated.id).kills.set(kill_count + 1)
         else:
             content = ""
             if killed > 0:
@@ -408,9 +456,13 @@ class Boss(commands.Cog):
                 dead_list = []
                 for i in range(killed):
                     dead = random.choice(self.boss_entries)
+                    if dead in dead_list:
+                        continue
                     self.boss_entries.remove(dead)
                     self.boss_dead.append(dead)
                     dead_list.append(dead)
+                    death_count = await self.config.user_from_id(dead[0]).deaths()
+                    await self.config.user_from_id(dead[0]).deaths.set(death_count + 1)
                 # add to content for each dead
                 content += f"{killed} people have died!\n"
                 content += "The following people have died while attacking the boss:\n"
@@ -419,31 +471,19 @@ class Boss(commands.Cog):
             log.info("Sending attack message")
             await channel.send(content=content, file=discord.File(file, "attack.txt"))
 
-    @boss.command()
-    @app_commands.checks.has_any_role(*roles)
-    async def stats(self, interaction: discord.Interaction):
-        """
-        Get the stats of the boss.
-        """
-        await interaction.response.defer(thinking=True, ephemeral=True)
-        # Send a message with the boss's stats
-        await interaction.followup.send(
-            f"The boss is {self.boss} and has {self.boss_hp}/{self.boss_max_hp} hp left."
-        )
-
-    @boss.command()
+    @boss_management.command()
     @app_commands.checks.has_any_role(*roles)
     async def info(self, interaction: discord.Interaction):
         """
         Information on how many balls are entered and how many are dead.
         """
         await interaction.response.defer(thinking=True, ephemeral=True)
-        # Send a message with the how many are enterted and how many are dead
+        # Send a message with the how many are enterted and how many are dead and boss hp
         await interaction.followup.send(
-            f"There are {len(self.boss_entries)} balls entered and {len(self.boss_dead)} balls dead."
+            f"There are {len(self.boss_entries)} players entered and {len(self.boss_dead)} players dead. The boss has {self.boss_hp}/{self.boss_max_hp} hp left."
         )
 
-    @boss.command()
+    @boss_management.command()
     @app_commands.checks.has_any_role(*roles)
     async def reset(self, interaction: discord.Interaction):
         """
@@ -459,3 +499,23 @@ class Boss(commands.Cog):
         self.joinable = False
         # Send a message saying the boss has been reset
         await interaction.followup.send(f"The boss has been reset.")
+
+    @boss.command()
+    async def stats(self, interaction: discord.Interaction):
+        """Show your damage to the boss."""
+        if interaction.user.id not in self.stats:
+            await interaction.response.send_message(
+                "You have not attacked the boss.", ephemeral=True
+            )
+            return
+        stats = self.stats[interaction.user.id]
+        total = 0
+        damage_log = ""
+        for stat in stats:
+            total += stat[1]
+            damage_log += f"{stat[0]}: {stat[1]}\n"
+        io = BytesIO(damage_log.encode("utf-8"))
+        file = discord.File(io, "damage.txt")
+        await interaction.response.send_message(
+            f"You have done {total} damage to the boss.", ephemeral=True, file=file
+        )
