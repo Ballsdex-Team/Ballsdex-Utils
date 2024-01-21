@@ -270,6 +270,7 @@ class Boss(commands.Cog):
             phrase = self.send_random_phrase(round_choice)
             await channel.send(phrase)
             log.info("Starting round")
+            await asyncio.sleep(15)
             loading_msg = await channel.send(
                 "Round over, damage is being calculated..."
             )
