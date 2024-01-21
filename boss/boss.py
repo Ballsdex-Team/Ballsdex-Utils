@@ -248,7 +248,7 @@ class Boss(commands.Cog):
         log.info("Starting boss battle")
         view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
         role = interaction.guild.get_role(1053284063420620850)
-        ten_mins = utcnow() + timedelta(minutes=10)
+        ten_mins = utcnow() + timedelta(minutes=3)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
         self.joinable = True
         message = await channel.send(
@@ -256,7 +256,7 @@ class Boss(commands.Cog):
             view=view,
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
-        await asyncio.sleep(600)
+        await asyncio.sleep(180)
         self.joinable = False
         await message.edit(content="The boss battle has begun!", view=None)
         for entry in self.boss_entries:
