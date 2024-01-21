@@ -423,7 +423,7 @@ class Boss(commands.Cog):
             attack_msg += f"{user.display_name}'s {ball.ball} attacked the boss for {attack} damage!\n"
             if user.id not in self.stats:
                 self.stats[user.id] = []
-            self.stats[user.id].append((ball, attack))
+            self.stats[user.id].append((ball.ball, attack))
             total_atk += attack
             if self.boss_hp <= 0:
                 defeated = user
