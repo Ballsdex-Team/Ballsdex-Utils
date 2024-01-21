@@ -420,14 +420,14 @@ class Boss(commands.Cog):
             # Subtract the attack from the boss hp
             self.boss_hp -= attack
             # Add the ball to the attack message
-            attack_msg += f"{user.display_name}'s {ball} attacked the boss for {attack} damage!\n"
+            attack_msg += f"{user.display_name}'s {ball.ball} attacked the boss for {attack} damage!\n"
             if user.id not in self.stats:
                 self.stats[user.id] = []
             self.stats[user.id].append((ball, attack))
             total_atk += attack
             if self.boss_hp <= 0:
                 defeated = user
-                attack_msg += f"The boss has been defeated! {ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
+                attack_msg += f"The boss has been defeated! {ball.ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
                 break
         for entry in failed:
             self.boss_entries.remove(entry)
