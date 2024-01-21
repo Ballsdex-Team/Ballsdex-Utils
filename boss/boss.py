@@ -534,22 +534,41 @@ class Boss(commands.Cog):
         )
 
     @boss.command()
-    async def leaderboard(self, interaction: discord.Interaction):
-        """Show the leaderboard for boss battles."""
-        await interaction.response.defer(thinking=True)
-        entries = await self.config.all_users()
-        if len(entries) == 0:
-            await interaction.followup.send("There are no entries.")
+    @app_commands.choices(
+        policy=[
+            app_commands.Choice(name="Kills", value="kills"),
+            app_commands.Choice(
+                name="Damage", value="damage"
+            ),
+            app_commands.Choice(name="Deaths", value="deaths"),
+        ]
+    )
+    async def leaderboard(self, interaction: discord.Interaction, key:app_commands.Choice[str]):
+        """Show the leaderboard for boss battles.
+
+        """
+        await interaction.response.defer()
+        if key == "kills":
+            key = "kills"
+            title = "Boss Kills"
+        elif key == "damage":
+            key = "damage"
+            title = "Boss Damage"
+        elif key == "deaths":
+            key = "deaths"
+            title = "Boss Deaths"
+        else:
+            await interaction.followup.send("Invalid key.")
             return
-        entries = sorted(entries.items(), key=lambda x: x[1]["damage"], reverse=True)
+        users = await self.config.all_users()
+        sorted_users = sorted(users, key=lambda x: users[x][key], reverse=True)
         leaderboard = ""
-        for entry in entries:
-            if entry[1]["damage"] == 0:
-                continue
-            user = interaction.guild.get_member(entry[0])
+        for i, user_id in enumerate(sorted_users):
+            if i == 10:
+                break
+            user = interaction.guild.get_member(int(user_id))
             if user is None:
-                user = await self.bot.fetch_user(entry[0])
-            leaderboard += f"{user.display_name}: {entry[1]['damage']}\n"
-        io = BytesIO(leaderboard.encode("utf-8"))
-        file = discord.File(io, "leaderboard.txt")
-        await interaction.followup.send(file=file)
+                user = await self.bot.fetch_user(user)
+            leaderboard += f"{i+1}. {user.display_name}: {users[user.id][key]}\n"
+        embed = discord.Embed(title=title, description=leaderboard)
+        await interaction.followup.send(embed=embed)
