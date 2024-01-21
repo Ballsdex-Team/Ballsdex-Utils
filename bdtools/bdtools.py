@@ -15,11 +15,17 @@ from discord.ui import Button, Modal, TextInput, View
 from redbot.core import commands, app_commands, Config, modlog
 from redbot.core.bot import Red
 
-from ballsdex.core.models import Ball, BallInstance, Player, GuildConfig, BlacklistedID, Special, balls
-
-from ballsdex.core.utils.transformers import (
-    BallEnabledTransform
+from ballsdex.core.models import (
+    Ball,
+    BallInstance,
+    Player,
+    GuildConfig,
+    BlacklistedID,
+    Special,
+    balls,
 )
+
+from ballsdex.core.utils.transformers import BallEnabledTransform
 
 from discord.ext import tasks
 
@@ -36,6 +42,7 @@ ROLE_IDS = {
 
 logger = getLogger("red.bdtools")
 
+
 class BlacklistChoices(enum.Enum):
     ticket = 0
     boss = 1
@@ -51,7 +58,16 @@ class BDTools(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=104911, force_registration=True)
-        self.config.register_guild(log_channel=None, email=None, password=None, appeals={}, blacklised_appeals={}, max=5000, min=250, pinned_thread=None)
+        self.config.register_guild(
+            log_channel=None,
+            email=None,
+            password=None,
+            appeals={},
+            blacklised_appeals={},
+            max=5000,
+            min=250,
+            pinned_thread=None,
+        )
         self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
         asyncio.create_task(self.check_collectors())
@@ -67,7 +83,9 @@ class BDTools(commands.Cog):
                 if member not in to_delete:
                     to_delete[member] = []
                 try:
-                    ball = await BallInstance.get(pk=members[member]["collector_balls"][ball]).prefetch_related("ball")
+                    ball = await BallInstance.get(
+                        pk=members[member]["collector_balls"][ball]
+                    ).prefetch_related("ball")
                 except:
                     to_delete[member].append(ball)
                     continue
@@ -75,15 +93,21 @@ class BDTools(commands.Cog):
 
                 needed_count = self.interpolate_value(maxi, mini, rarity)
                 needed_count = self.round_to_50(needed_count)
-                count = await BallInstance.filter(ball=ball.ball, player__discord_id=member).count()
+                count = await BallInstance.filter(
+                    ball=ball.ball, player__discord_id=member
+                ).count()
                 if count >= needed_count:
                     continue
                 await ball.delete()
                 if user:
-                    await user.send(f"Your {ball.ball.country} collector ball has been deleted because you no longer have enough balls to maintain it.")
+                    await user.send(
+                        f"Your {ball.ball.country} collector ball has been deleted because you no longer have enough balls to maintain it."
+                    )
                 to_delete[member].append(ball)
         for member in to_delete:
-            async with self.config.user_from_id(member).collector_balls() as collector_balls:
+            async with self.config.user_from_id(
+                member
+            ).collector_balls() as collector_balls:
                 for ball in to_delete[member]:
                     del collector_balls[str(ball)]
 
@@ -133,25 +157,25 @@ class BDTools(commands.Cog):
         await ctx.send(f"Log channel has been set to {channel.mention}.")
 
     # --- Text Commands ---
-#    @commands.mod()
-#    @commands.command()
-#    async def slowmode(self, ctx: commands.Context, time: int):
-#        """Set the slowmode for the channel."""
-#        if time < 0 or time > 60:
-#            await ctx.send(
-#                "The time your have provided is out of bounds. It should be between 0 and 60."
-#            )
-#            return
-#        await ctx.channel.edit(
-#            slowmode_delay=time, reason=f"Requested by {str(ctx.author)}"
-#        )
-#        await ctx.send(f"Slowmode has been set to {time} seconds.")
-#        await self.maybe_send_logs(
-#            guild=ctx.guild,
-#            mod=ctx.author,
-#            event="Slowmode set",
-#            message=f"Slowmode has been set to {time} seconds on {ctx.channel.mention}."
-#        )
+    #    @commands.mod()
+    #    @commands.command()
+    #    async def slowmode(self, ctx: commands.Context, time: int):
+    #        """Set the slowmode for the channel."""
+    #        if time < 0 or time > 60:
+    #            await ctx.send(
+    #                "The time your have provided is out of bounds. It should be between 0 and 60."
+    #            )
+    #            return
+    #        await ctx.channel.edit(
+    #            slowmode_delay=time, reason=f"Requested by {str(ctx.author)}"
+    #        )
+    #        await ctx.send(f"Slowmode has been set to {time} seconds.")
+    #        await self.maybe_send_logs(
+    #            guild=ctx.guild,
+    #            mod=ctx.author,
+    #            event="Slowmode set",
+    #            message=f"Slowmode has been set to {time} seconds on {ctx.channel.mention}."
+    #        )
 
     @commands.mod()
     @commands.group(name="thread")
@@ -162,6 +186,11 @@ class BDTools(commands.Cog):
     @thread_group.command()
     async def close(self, ctx: commands.Context, *, reason: Optional[str] = None):
         """Close a thread/forum post."""
+        if isinstance(ctx.channel, discord.Thread):
+            if ctx.channel.parent_id == 1059224729019498546:
+                return await ctx.send(
+                    "You cannot close a thread in the tickets with this command.\nPlease use `-close` instead."
+                )
         if not isinstance(ctx.channel, discord.Thread):
             await ctx.send("This channel is not a thread or forum post.")
             return
@@ -176,7 +205,7 @@ class BDTools(commands.Cog):
                 guild=ctx.guild,
                 mod=ctx.author,
                 event="Thread closed",
-                message=f"{ctx.channel.mention} has been closed.\nReason: {reason}"
+                message=f"{ctx.channel.mention} has been closed.\nReason: {reason}",
             )
         else:
             await ctx.channel.edit(
@@ -186,13 +215,18 @@ class BDTools(commands.Cog):
                 guild=ctx.guild,
                 mod=ctx.author,
                 event="Thread closed",
-                message=f"{ctx.channel.mention} has been closed."
+                message=f"{ctx.channel.mention} has been closed.",
             )
 
     @commands.mod()
     @thread_group.command()
     async def lock(self, ctx: commands.Context, *, reason: Optional[str] = None):
         """Lock a forum/thread."""
+        if isinstance(ctx.channel, discord.Thread):
+            if ctx.channel.parent_id == 1059224729019498546:
+                return await ctx.send(
+                    "You cannot lock a thread in the tickets with this command.\nPlease use `-close` instead."
+                )
         if not isinstance(ctx.channel, discord.Thread):
             await ctx.send("This channel is not a thread or forum post.")
             return
@@ -205,7 +239,7 @@ class BDTools(commands.Cog):
                 guild=ctx.guild,
                 mod=ctx.author,
                 event="Thread locked",
-                message=f"{ctx.channel.mention} has been locked.\nReason: {reason}"
+                message=f"{ctx.channel.mention} has been locked.\nReason: {reason}",
             )
         else:
             await ctx.channel.edit(
@@ -215,9 +249,8 @@ class BDTools(commands.Cog):
                 guild=ctx.guild,
                 mod=ctx.author,
                 event="Thread locked",
-                message=f"{ctx.channel.mention} has been locked."
+                message=f"{ctx.channel.mention} has been locked.",
             )
-            
 
     # --- Slash Commands ---
     @app_commands.command(name="clear-marketplace")
@@ -225,7 +258,8 @@ class BDTools(commands.Cog):
     @app_commands.guild_only()
     @app_commands.default_permissions(administrator=True)
     async def slash_clear_marketplace(
-        self, interaction: discord.Interaction,
+        self,
+        interaction: discord.Interaction,
         you_sure: bool = False,
     ) -> None:
         """Lock, archive, and clean the marketplace.
@@ -254,54 +288,59 @@ class BDTools(commands.Cog):
         overwrite.send_messages_in_threads = False
         overwrite.add_reactions = False
 
-        marketplace = discord.utils.get(interaction.guild.channels, id=1092534995605782678)
+        marketplace = discord.utils.get(
+            interaction.guild.channels, id=1092534995605782678
+        )
         if marketplace is None:
             return await interaction.followup.send(
                 "The marketplace channel could not be found.",
                 ephemeral=True,
             )
-        await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
-        thread_list = marketplace.threads  # Store a local copy so we don't close our maintain message
+        await marketplace.set_permissions(
+            interaction.guild.default_role, overwrite=overwrite
+        )
+        thread_list = (
+            marketplace.threads
+        )  # Store a local copy so we don't close our maintain message
         tag = discord.utils.get(marketplace.available_tags, name="Meta")
 
         try:
             pinned_thread = await marketplace.create_thread(
                 name="Marketplace Maintenance 🧹",
                 content="The marketplace is currently being cleaned. Please check back later.",
-                applied_tags=[tag]
+                applied_tags=[tag],
             )
             await pinned_thread.thread.edit(locked=True, pinned=True)
         except discord.HTTPException:
             return await interaction.followup.send(
-                    "The marketplace could not be cleaned due to max pinned threads being reached.",
-                    ephemeral=True,
-                )
+                "The marketplace could not be cleaned due to max pinned threads being reached.",
+                ephemeral=True,
+            )
         for thread in thread_list:
             await thread.edit(locked=True, archived=True)
         # Undo the permissions
         overwrite.send_messages = None
         overwrite.send_messages_in_threads = None
         await pinned_thread.thread.edit(locked=True, archived=True)
-        await marketplace.set_permissions(interaction.guild.default_role, overwrite=overwrite)
+        await marketplace.set_permissions(
+            interaction.guild.default_role, overwrite=overwrite
+        )
         trade = await marketplace.create_thread(
-                name="Ask for Trade",
-                content="Post your trades below.",
-                applied_tags=[tag]
+            name="Ask for Trade", content="Post your trades below.", applied_tags=[tag]
         )
         await trade.thread.edit(pinned=True)
         await self.config.guild(interaction.guild).pinned_thread.set(trade.thread.id)
         await marketplace.create_thread(
-                name="Ask for Ball",
-                content="Ask for balls below, any duplicate threads will be deleted..",
-                applied_tags=[tag]
+            name="Ask for Ball",
+            content="Ask for balls below, any duplicate threads will be deleted..",
+            applied_tags=[tag],
         )
         await interaction.followup.send("All done!")
 
     def round_to_50(self, x):
         return int(round(x / 50.0)) * 50
-    
-    def interpolate_value(self, maximum, minimum, x):
 
+    def interpolate_value(self, maximum, minimum, x):
         x1, y1 = 0.05, minimum
         x2, y2 = 0.8, maximum
 
@@ -309,26 +348,29 @@ class BDTools(commands.Cog):
         result = min(maximum, max(minimum, y1 + (x - x1) * (y2 - y1) / (x2 - x1)))
         return result
 
-
     @app_commands.command(name="collector")
     @app_commands.guilds(discord.Object(id=1049118743101452329))
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 600, key=lambda i: i.user.id)
     async def slash_collector(
-        self, 
+        self,
         interaction: discord.Interaction,
         ball: BallEnabledTransform,
     ):
         """Create a collector ball.
-        
+
         Parameters
         -----------
         ball: Ball
             The ball to create.
         """
         if not ball.enabled:
-            return await interaction.response.send_message("Cannot use this ball", ephemeral=True)
-        count = await BallInstance.filter(ball=ball, player__discord_id=interaction.user.id).count()
+            return await interaction.response.send_message(
+                "Cannot use this ball", ephemeral=True
+            )
+        count = await BallInstance.filter(
+            ball=ball, player__discord_id=interaction.user.id
+        ).count()
         maxi = await self.config.guild(interaction.guild).max()
         mini = await self.config.guild(interaction.guild).min()
         needed_count = self.interpolate_value(maxi, mini, ball.rarity)
@@ -338,8 +380,10 @@ class BDTools(commands.Cog):
                 f"You need {needed_count} {ball.country} to create a collector ball. You currently have {count}.",
                 ephemeral=True,
             )
-        
-        async with self.config.user(interaction.user).collector_balls() as collector_balls:
+
+        async with self.config.user(
+            interaction.user
+        ).collector_balls() as collector_balls:
             if ball.country in collector_balls:
                 return await interaction.response.send_message(
                     f"You already have a {ball.country} collector ball.",
@@ -349,10 +393,12 @@ class BDTools(commands.Cog):
                 f"Successfully created a {ball.country} collector ball.",
                 ephemeral=True,
             )
-            ball_obj = await BallInstance.create(ball=ball, player=await Player.get(discord_id=interaction.user.id), special=await Special.get(name="Collector"))
+            ball_obj = await BallInstance.create(
+                ball=ball,
+                player=await Player.get(discord_id=interaction.user.id),
+                special=await Special.get(name="Collector"),
+            )
             collector_balls[ball.country] = ball_obj.pk
-    
-        
 
     blacklist_group = app_commands.Group(
         name="blacklist",
@@ -503,11 +549,12 @@ class BDTools(commands.Cog):
             mod=interaction.user,
             event="Member appeal blacklisted",
             message=(
-                f"{user_id} has been blacklisted from appealing.\n"
-                f"Reason: {reason}"
+                f"{user_id} has been blacklisted from appealing.\n" f"Reason: {reason}"
             ),
         )
-        async with self.config.guild(interaction.guild).blacklised_appeals() as blacklised_appeals:
+        async with self.config.guild(
+            interaction.guild
+        ).blacklised_appeals() as blacklised_appeals:
             blacklised_appeals[str(user_id)] = reason
 
     # thread_group = app_commands.Group(
@@ -559,12 +606,15 @@ class BDTools(commands.Cog):
     #             f"{member.mention} has been removed from {thread.name}.\n"
     #         ),
     #     )
-    
+
     async def handle_req(self, message):
         guild = message.guild
         ban_appeal_channel = guild.get_channel(1184091996932022292)
         ban_appeal = {}
-        if message.content == "{{Email Address}},{{Discord ID}},{{Discord Name}},{{Banning Admin}},{{Reason for ban}},{{Why should we unban you?}}":
+        if (
+            message.content
+            == "{{Email Address}},{{Discord ID}},{{Discord Name}},{{Banning Admin}},{{Reason for ban}},{{Why should we unban you?}}"
+        ):
             return
         try:
             split = message.content.split(",")
@@ -576,7 +626,9 @@ class BDTools(commands.Cog):
             ban_appeal["msg"] = split[5]
         except Exception as e:
             user = guild.get_member(95932766180343808)
-            await user.send(f"<@95932766180343808> cannot decode for ban appeal\n\n{message.content}")
+            await user.send(
+                f"<@95932766180343808> cannot decode for ban appeal\n\n{message.content}"
+            )
             logger.error(f"Cannot decode text for ban appeal\n\n{message.content}")
             return
         # check if user is banned
@@ -592,12 +644,13 @@ class BDTools(commands.Cog):
         if ban_appeal["id"] in blacklisted_app:
             contents = f"You have been blacklisted from appealing for the following reason(s): {blacklisted_app[ban_appeal['id']]}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
             await send_email(ban_appeal["email"], contents, self, guild)
-            await ban_appeal_channel.send(f"{ban_appeal['name']}-{ban_appeal['id']} (Reason: {ban_entry.reason}) has appealed but is blacklisted from appealing for the following reason(s): {blacklisted_app[ban_appeal['id']]}")
+            await ban_appeal_channel.send(
+                f"{ban_appeal['name']}-{ban_appeal['id']} (Reason: {ban_entry.reason}) has appealed but is blacklisted from appealing for the following reason(s): {blacklisted_app[ban_appeal['id']]}"
+            )
             return
         embed = discord.Embed(
             title=f"Ban Appeal for {ban_appeal['name']}",
             description=f"**Name**: {ban_appeal['name']}-{ban_appeal['id']}\n**Ban Reason**: {ban_entry.reason}\n**Ban Reason Supplied**: {ban_appeal['reason']}\n**Appeal Message**: {ban_appeal['msg'] if len(ban_appeal['msg']) < 750 else ban_appeal['msg'][:750] + '...'}\n**Banning Admin**: {ban_appeal['admin']}",
-
         )
         content = ""
         admin_search = ID_REGEX.findall(ban_entry.reason)
@@ -606,8 +659,15 @@ class BDTools(commands.Cog):
             content = admin.mention
         else:
             content = "<@&1049119786988212296> <@&1049119446372986921>"
-        allowed_mentions = discord.AllowedMentions(everyone=False, roles=True, users=True)
-        msg = await ban_appeal_channel.send(content, embed=embed, view=UnbanView(message, self.bot, self), allowed_mentions=allowed_mentions)
+        allowed_mentions = discord.AllowedMentions(
+            everyone=False, roles=True, users=True
+        )
+        msg = await ban_appeal_channel.send(
+            content,
+            embed=embed,
+            view=UnbanView(message, self.bot, self),
+            allowed_mentions=allowed_mentions,
+        )
         async with self.config.guild(guild).appeals() as appeals:
             appeals[str(msg.id)] = ban_appeal
 
@@ -619,7 +679,6 @@ class BDTools(commands.Cog):
         async for message in ban_appeal_channel.history(limit=amount):
             await self.handle_req(message)
 
-
     # --- Events ---
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -628,7 +687,7 @@ class BDTools(commands.Cog):
             await self.handle_req(message)
             return
 
-        if message.channel.id != 1177735598275035157: # Art channel.
+        if message.channel.id != 1177735598275035157:  # Art channel.
             return
         if any(
             # Ballsdex and Proto helper bot, bots
@@ -638,13 +697,12 @@ class BDTools(commands.Cog):
             return
         await message.add_reaction("👍")
 
-    
-
-
 
 class UnbanPrompt(Modal, title=f"Unban Appeal"):
     reason = TextInput(
-        label="Unban Confirmation", style=discord.TextStyle.short, placeholder="Are you sure? Please type 'yes' to confirm."
+        label="Unban Confirmation",
+        style=discord.TextStyle.short,
+        placeholder="Are you sure? Please type 'yes' to confirm.",
     )
 
     def __init__(self, interaction, button, ban, email, bot, cog):
@@ -656,13 +714,17 @@ class UnbanPrompt(Modal, title=f"Unban Appeal"):
         self.bot = bot
         self.cog = cog
 
-
     async def on_submit(self, interaction):
         if self.reason.value.lower() != "yes":
-            await interaction.response.send_message(f"{interaction.user.mention} has not unbanned {self.ban.user} because they did not confirm.", ephemeral=True)
+            await interaction.response.send_message(
+                f"{interaction.user.mention} has not unbanned {self.ban.user} because they did not confirm.",
+                ephemeral=True,
+            )
             return
         await interaction.guild.unban(self.ban.user, reason=self.reason.value)
-        await interaction.response.send_message(f"{interaction.user.mention} has unbanned {self.ban.user}.", ephemeral=True)
+        await interaction.response.send_message(
+            f"{interaction.user.mention} has unbanned {self.ban.user}.", ephemeral=True
+        )
         await modlog.create_case(
             self.bot,
             interaction.guild,
@@ -672,9 +734,18 @@ class UnbanPrompt(Modal, title=f"Unban Appeal"):
             self.interaction.user,
             f"Unban appeal accepted by {interaction.user}",
         )
-        await send_email(self.email, f"Your ban appeal for {interaction.guild} has been accepted. You have been unbanned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email.", self.cog, interaction.guild)
+        await send_email(
+            self.email,
+            f"Your ban appeal for {interaction.guild} has been accepted. You have been unbanned.\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email.",
+            self.cog,
+            interaction.guild,
+        )
         # remove buttons from original interaction
-        await self.interaction.message.edit(view=None, content=f"{self.interaction.message.content}\n\n{interaction.user.mention} has unbanned this user.")
+        await self.interaction.message.edit(
+            view=None,
+            content=f"{self.interaction.message.content}\n\n{interaction.user.mention} has unbanned this user.",
+        )
+
 
 async def send_email(email, contents, cog, guild):
     message = EmailMessage()
@@ -693,10 +764,9 @@ async def send_email(email, contents, cog, guild):
         use_tls=True,
     )
 
+
 class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
-    reason = TextInput(
-        label="Reason for denial", style=discord.TextStyle.long
-    )
+    reason = TextInput(label="Reason for denial", style=discord.TextStyle.long)
 
     def __init__(self, interaction, button, ban, email, cog):
         super().__init__()
@@ -706,14 +776,19 @@ class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
         self.email = email
         self.cog = cog
 
-
     async def on_submit(self, interaction):
-        await interaction.response.send_message(f"{interaction.user.mention} has denied {self.ban.user}'s appeal for {self.reason.value}.", ephemeral=True)
-  
+        await interaction.response.send_message(
+            f"{interaction.user.mention} has denied {self.ban.user}'s appeal for {self.reason.value}.",
+            ephemeral=True,
+        )
+
         contents = f"Your ban appeal for {interaction.guild} has been denied for the following reason: {self.reason.value}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
         await send_email(self.email, contents, self.cog, interaction.guild)
         # # remove buttons from original interaction
-        await self.interaction.message.edit(view=None, content=f"{self.interaction.message.content}\n\n{interaction.user.mention} has denied this appeal for the following reason: {self.reason.value}")
+        await self.interaction.message.edit(
+            view=None,
+            content=f"{self.interaction.message.content}\n\n{interaction.user.mention} has denied this appeal for the following reason: {self.reason.value}",
+        )
 
 
 class UnbanView(View):
@@ -728,15 +803,17 @@ class UnbanView(View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         await self.get_data(interaction)
-        if 1049119446372986921 in [x.id for x in interaction.user.roles] or 718365766671663144 not in [x.id for x in interaction.user.roles]:
+        if 1049119446372986921 in [
+            x.id for x in interaction.user.roles
+        ] or 718365766671663144 not in [x.id for x in interaction.user.roles]:
             return True
-        if (self.admin is not None and interaction.user.id != self.admin):
+        if self.admin is not None and interaction.user.id != self.admin:
             await interaction.response.send_message(
                 "You are not the banning admin.", ephemeral=True
             )
             return False
         return True
-    
+
     async def get_data(self, interaction: discord.Interaction):
         message = interaction.message
         async with self.cog.config.guild(interaction.guild).appeals() as appeals:
@@ -754,14 +831,17 @@ class UnbanView(View):
     )
     async def confirm_button(self, interaction: discord.Interaction, button: Button):
         await self.get_data(interaction)
-        await interaction.response.send_modal(UnbanPrompt(interaction, button, self.ban, self.email, self.bot, self.cog))
+        await interaction.response.send_modal(
+            UnbanPrompt(interaction, button, self.ban, self.email, self.bot, self.cog)
+        )
 
     @discord.ui.button(
         style=discord.ButtonStyle.danger,
         label="Reject Appeal",
-        custom_id="reject-button"
+        custom_id="reject-button",
     )
     async def cancel_button(self, interaction: discord.Interaction, button: Button):
-       await self.get_data(interaction)
-       await interaction.response.send_modal(UnbanDenyPrompt(interaction, button, self.ban, self.email, self.cog))
-
+        await self.get_data(interaction)
+        await interaction.response.send_modal(
+            UnbanDenyPrompt(interaction, button, self.ban, self.email, self.cog)
+        )
