@@ -548,18 +548,7 @@ class Boss(commands.Cog):
 
         """
         await interaction.response.defer()
-        if key == "kills":
-            key = "kills"
-            title = "Boss Kills"
-        elif key == "damage":
-            key = "damage"
-            title = "Boss Damage"
-        elif key == "deaths":
-            key = "deaths"
-            title = "Boss Deaths"
-        else:
-            await interaction.followup.send("Invalid key.")
-            return
+        key = key.value
         users = await self.config.all_users()
         sorted_users = sorted(users, key=lambda x: users[x][key], reverse=True)
         leaderboard = ""
@@ -570,5 +559,5 @@ class Boss(commands.Cog):
             if user is None:
                 user = await self.bot.fetch_user(user)
             leaderboard += f"{i+1}. {user.display_name}: {users[user.id][key]}\n"
-        embed = discord.Embed(title=title, description=leaderboard)
+        embed = discord.Embed(title=f"{key.title()} leaderboard", description=leaderboard)
         await interaction.followup.send(embed=embed)
