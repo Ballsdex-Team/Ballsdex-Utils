@@ -31,15 +31,15 @@ BOSSES = {
     "Reichtangle": {
         "attack_msg": "Reichtangle has attacked! The following players have been attacked: \n",
         "defence_msg": "Reichtangle was attacked! The following balls successfully attacked: \n",
-        "attack_chance": 80,
-        "defence_chance": 20,
-        "kill_chance": 15,
+        "attack_chance": 70,
+        "defence_chance": 30,
+        "kill_chance": 18,
     },
     "Russian Empire": {
         "attack_msg": "The Russian Empire has attacked! The following players have been attacked: \n",
         "defence_msg": "The Russian Empire was attacked! The following balls successfully attacked: \n",
-        "attack_chance": 80,
-        "defence_chance": 20,
+        "attack_chance": 65,
+        "defence_chance": 35,
         "kill_chance": 15,
     },
     "Kalmar Union": {
@@ -73,9 +73,9 @@ BOSSES = {
     "United States": {
         "attack_msg": "The United States has attacked! The following players have been attacked: \n",
         "defence_msg": "The United States was attacked! The following balls successfully attacked: \n",
-        "attack_chance": 80,
-        "defence_chance": 20,
-        "kill_chance": 15,
+        "attack_chance": 60,
+        "defence_chance": 40,
+        "kill_chance": 27,
     },
     "Vatican": {
         "attack_msg": "The Vatican has attacked! The following players have been attacked: \n",
@@ -89,7 +89,7 @@ BOSSES = {
         "defence_msg": "Russia was attacked! The following balls successfully attacked: \n",
         "attack_chance": 80,
         "defence_chance": 20,
-        "kill_chance": 15,
+        "kill_chance": 27,
     },
     "Greenland": {
         "attack_msg": "Greenland has attacked! The following players have been attacked: \n",
@@ -103,7 +103,7 @@ BOSSES = {
         "defence_msg": "The Soviet Union was attacked! The following balls successfully attacked: \n",
         "attack_chance": 80,
         "defence_chance": 20,
-        "kill_chance": 20,
+        "kill_chance": 37,
     },
     "Roman Empire": {
         "attack_msg": "The Roman Empire has attacked! The following players have been attacked: \n",
@@ -129,15 +129,15 @@ BOSSES = {
     "British Empire": {
         "attack_msg": "The British Empire has attacked! The following players have been attacked: \n",
         "defence_msg": "The British Empire was attacked! The following balls successfully attacked: \n",
-        "attack_chance": 80,
-        "defence_chance": 20,
+        "attack_chance": 73,
+        "defence_chance": 27,
         "kill_chance": 5,
     },
     "Republic of China": {
         "attack_msg": "The Republic of China has attacked! The following players have been attacked: \n",
         "defence_msg": "The Republic of China was attacked! The following balls successfully attacked: \n",
-        "attack_chance": 80,
-        "defence_chance": 20,
+        "attack_chance": 70,
+        "defence_chance": 30,
         "kill_chance": 5,
     },
     "Japanese Empire": {
@@ -248,7 +248,7 @@ class Boss(commands.Cog):
         log.info("Starting boss battle")
         view = BossView(interaction, self.boss_entries, self.boss_dead, self.joinable)
         role = interaction.guild.get_role(1053284063420620850)
-        ten_mins = utcnow() + timedelta(minutes=3)
+        ten_mins = utcnow() + timedelta(minutes=10)
         relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
         self.joinable = True
         message = await channel.send(
@@ -267,6 +267,7 @@ class Boss(commands.Cog):
                 await channel.send("The boss has no balls to attack, the boss has won!")
                 return
             round_choice = "Defence" if random.randint(0, 100) < BOSSES[self.boss]["defence_chance"] else "Attack"
+            defence_killing = random.randint(0, 100) > 80
             phrase = self.send_random_phrase(round_choice)
             await channel.send(phrase)
             log.info("Starting round")
@@ -276,12 +277,12 @@ class Boss(commands.Cog):
             )
             log.info("Round over, damage is being calculated...")
             # attack or defence round
-            if round_choice == "Defence":
-                log.info("defence round")
+            if round_choice == "Attack":
+                log.info("Boss attack round")
                 await self.defence_round(interaction, channel)
             else:
-                log.info("attack round")
-                if random.randint(0, 100) > 80:
+                log.info("Boss defend round")
+                if defence_killing:
                     log.info("Killing entries")
                     amount = random.randint(1, int(len(self.boss_entries) / 5))
                     await self.attack_round(
@@ -293,10 +294,11 @@ class Boss(commands.Cog):
                     log.info("Not killing entries")
                     await self.attack_round(interaction, channel)
             await loading_msg.delete()
-            ten_mins = utcnow() + timedelta(minutes=5)
-            relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
-            await channel.send(f"\n*Next round starting in* {relative_text}")
-            await asyncio.sleep(300)
+            if self.boss_hp > 0:
+                ten_mins = utcnow() + timedelta(minutes=3)
+                relative_text = f"<t:{int(ten_mins.timestamp())}:R>"
+                await channel.send(f"\n*Next round starting* {relative_text}", delete_after=300)
+                await asyncio.sleep(180)
 
 
     def send_random_phrase(self, type):
@@ -405,8 +407,8 @@ class Boss(commands.Cog):
                 user = await self.bot.fetch_user(entry[0])
             # Choose a random ball from the entry
             balls = await BallInstance.filter(
-                player__discord_id=entry[0]
-            ).prefetch_related("ball")
+                player__discord_id=entry[0], ball__tradeable=True
+            ).prefetch_related("ball", "special")
             player1set = set()
             for ball in balls:
                 player1set.add(ball.ball)
@@ -420,14 +422,14 @@ class Boss(commands.Cog):
             # Subtract the attack from the boss hp
             self.boss_hp -= attack
             # Add the ball to the attack message
-            attack_msg += f"{user.display_name}'s {ball.ball} attacked the boss for {attack} damage!\n"
+            attack_msg += f"{user.display_name}'s {ball} attacked the boss for {attack} damage!\n"
             if user.id not in self.stats:
                 self.stats[user.id] = []
             self.stats[user.id].append((ball.ball, attack))
             total_atk += attack
             if self.boss_hp <= 0:
                 defeated = user
-                attack_msg += f"The boss has been defeated! {ball.ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
+                attack_msg += f"The boss has been defeated! {ball} has won the boss battle, this ball was played by {user.display_name} ({entry[0]})!"
                 break
         for entry in failed:
             self.boss_entries.remove(entry)
@@ -469,8 +471,10 @@ class Boss(commands.Cog):
                 content += "The following people have died while attacking the boss:\n"
                 for dead in dead_list:
                     content += f"<@{dead[0]}>\n"
+            attack_msg = content + attack_msg
             log.info("Sending attack message")
-            await channel.send(content=content, file=discord.File(file, "attack.txt"))
+            file = BytesIO(attack_msg.encode("utf-8"))
+            await channel.send(file=discord.File(file, "attack.txt"))
 
     @boss_management.command()
     @app_commands.checks.has_any_role(*roles)
@@ -547,7 +551,7 @@ class Boss(commands.Cog):
         """Show the leaderboard for boss battles.
 
         """
-        await interaction.response.defer()
+        await interaction.response.defer(ephermeral=True)
         key = key.value
         users = await self.config.all_users()
         sorted_users = sorted(users, key=lambda x: users[x][key], reverse=True)
@@ -560,4 +564,6 @@ class Boss(commands.Cog):
                 user = await self.bot.fetch_user(user)
             leaderboard += f"{i+1}. {user.display_name}: {users[user.id][key]}\n"
         embed = discord.Embed(title=f"{key.title()} leaderboard", description=leaderboard)
+        if self.boss:
+            embed.set_footer(text=f"Leaderboard is updated after the boss is defeated.")
         await interaction.followup.send(embed=embed, ephemeral=True)
