@@ -41,8 +41,8 @@ class ReportModal(Modal, title=f"Unban Appeal"):
             )
             embed.add_field(name="Reason", value=self.reason.value)
             embed.add_field(name="Reported User", value=f"{self.reported.mention} ({self.reported.id})", inline=False)
-        channel = interaction.guild.get_channel(519604238150664202)  
-        role = interaction.guild.get_role(574008098579152918)	
+        channel = interaction.guild.get_channel(1199046017635602533)  
+        role = interaction.guild.get_role(1073775485840003102)	
         await channel.send(role.mention, embed=embed, allowed_mentions=discord.AllowedMentions(roles=True))
         await interaction.response.send_message("Report sent!", ephemeral=True)
 
