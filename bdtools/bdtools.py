@@ -623,7 +623,7 @@ class BDTools(commands.Cog):
             ban_appeal["name"] = split[2]
             ban_appeal["admin"] = split[3]
             ban_appeal["reason"] = split[4]
-            ban_appeal["msg"] = split[5]
+            ban_appeal["msg"] = ",".join(split[5:])
         except Exception as e:
             user = guild.get_member(95932766180343808)
             await user.send(
