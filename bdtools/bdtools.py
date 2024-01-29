@@ -721,10 +721,12 @@ class UnbanPrompt(Modal, title=f"Unban Appeal"):
                 ephemeral=True,
             )
             return
-        await interaction.guild.unban(self.ban.user, reason=self.reason.value)
+        await interaction.guild.unban(self.ban.user, reason=f"Ban appealed accepted by {interaction.user}")
         await interaction.response.send_message(
             f"{interaction.user.mention} has unbanned {self.ban.user}.", ephemeral=True
         )
+        async with self.cog.config.guild(interaction.guild).appeals() as appeals:
+            appeals[str(self.interaction.message.id)]["handled"] = True
         await modlog.create_case(
             self.bot,
             interaction.guild,
@@ -781,7 +783,8 @@ class UnbanDenyPrompt(Modal, title=f"Unban Appeal"):
             f"{interaction.user.mention} has denied {self.ban.user}'s appeal for {self.reason.value}.",
             ephemeral=True,
         )
-
+        async with self.cog.config.guild(interaction.guild).appeals() as appeals:
+            appeals[str(self.interaction.message.id)]["handled"] = True
         contents = f"Your ban appeal for {interaction.guild} has been denied for the following reason: {self.reason.value}\n\nThanks,\nBallsdex Staff\n\nThis is an automated message, please do not reply to this email."
         await send_email(self.email, contents, self.cog, interaction.guild)
         # # remove buttons from original interaction
@@ -800,6 +803,7 @@ class UnbanView(View):
         self.bot = bot
         self.cog = cog
         self.admin = None
+        self.handled = False
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         await self.get_data(interaction)
@@ -819,6 +823,7 @@ class UnbanView(View):
         async with self.cog.config.guild(interaction.guild).appeals() as appeals:
             appeal = appeals[str(message.id)]
         self.email = appeal["email"]
+        self.handled = appeal.get("handled", False)
         self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
         admin_search = ID_REGEX.findall(self.ban.reason)
         if admin_search:
@@ -831,6 +836,11 @@ class UnbanView(View):
     )
     async def confirm_button(self, interaction: discord.Interaction, button: Button):
         await self.get_data(interaction)
+        if self.handled:
+            await interaction.response.send_message(
+                "This appeal has already been handled.", ephemeral=True
+            )
+            return
         await interaction.response.send_modal(
             UnbanPrompt(interaction, button, self.ban, self.email, self.bot, self.cog)
         )
