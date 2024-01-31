@@ -828,6 +828,7 @@ class UnbanView(View):
             self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
         except discord.NotFound:
             self.ban = None
+            return
         admin_search = ID_REGEX.findall(self.ban.reason)
         if admin_search:
             self.admin = message.guild.get_member(int(admin_search[0]))
