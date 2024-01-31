@@ -824,7 +824,10 @@ class UnbanView(View):
             appeal = appeals[str(message.id)]
         self.email = appeal["email"]
         self.handled = appeal.get("handled", False)
-        self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
+        try:
+            self.ban = await interaction.guild.fetch_ban(discord.Object(appeal["id"]))
+        except discord.NotFound:
+            self.ban = None
         admin_search = ID_REGEX.findall(self.ban.reason)
         if admin_search:
             self.admin = message.guild.get_member(int(admin_search[0]))
@@ -836,6 +839,12 @@ class UnbanView(View):
     )
     async def confirm_button(self, interaction: discord.Interaction, button: Button):
         await self.get_data(interaction)
+        if self.ban is None:
+            await interaction.response.send_message(
+                "This user is not banned.", ephemeral=True
+            )
+            await interaction.message.edit(view=None)
+            return
         if self.handled:
             await interaction.response.send_message(
                 "This appeal has already been handled.", ephemeral=True
@@ -852,6 +861,13 @@ class UnbanView(View):
     )
     async def cancel_button(self, interaction: discord.Interaction, button: Button):
         await self.get_data(interaction)
+        if self.ban is None:
+            await interaction.response.send_message(
+                "This user is not banned.", ephemeral=True
+            )
+            await interaction.message.edit(view=None)
+
+            return
         await interaction.response.send_modal(
             UnbanDenyPrompt(interaction, button, self.ban, self.email, self.cog)
         )
