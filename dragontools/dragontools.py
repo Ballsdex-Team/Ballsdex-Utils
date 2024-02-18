@@ -1,6 +1,6 @@
 import discord
 
-from redbot.core import commands, app_commands
+from redbot.core import commands, app_commands, Config
 
 from discord.ui import Button, Modal, TextInput, View
 
@@ -10,6 +10,23 @@ class DragonTools(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.config = Config.get_conf(self, identifier=1234567890)
+        default = {
+            "moderation": {}
+        }
+        self.config.register(**default)
+
+    @commands.command()
+    @commands.is_owner()
+    async def modstats(self, ctx):
+        modstats = await self.config.moderation()
+        stats = ""
+        for mod in modstats:
+            stats += f"**{mod}**\n"
+            for key, value in mod.items():
+                stats += f"{key}: {value}\n"
+        await ctx.send(modstats)
+
 
 class ReportModal(Modal, title=f"Unban Appeal"):
     reason = TextInput(
