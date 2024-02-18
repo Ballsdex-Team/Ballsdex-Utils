@@ -33,13 +33,17 @@ class DragonTools(commands.Cog):
     @commands.mod()
     async def vwarn(self, ctx, user: discord.Member, *, reason):
         """Issue a verbal warning to a user."""
-        await ctx.send(f"{user.mention} has been issued a verbal warning for {reason}")
-        await user.send(f"You have been given a verbal warning in {ctx.guild.name} for {reason}.\nPlease take this as a warning and ensure you follow the rules in the future. If you have any questions or concerns, please reach out to a moderator or admin. Thank you.")
+        msg = f"**{user}** has been given a verbal warning for {reason}."
+        try:
+            await user.send(f"You have been given a verbal warning in {ctx.guild.name} for {reason}.\nPlease take this as a warning and ensure you follow the rules in the future. If you have any questions or concerns, please reach out to a moderator or admin. Thank you.")
+        except discord.Forbidden:
+            msg += " (User has DMs disabled/blocked)"
         async with self.config.guild(ctx.guild).verbalwarning() as verbalwarning:
             if str(user.id) not in verbalwarning:
                 verbalwarning[str(user.id)] = []
             case = {"reason": reason, "mod": ctx.author.id, "time": ctx.message.created_at}
             verbalwarning[str(user.id)].append(case)
+        await ctx.send(msg)
 
     @commands.command()
     @commands.mod()
