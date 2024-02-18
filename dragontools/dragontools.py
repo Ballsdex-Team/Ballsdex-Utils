@@ -19,7 +19,7 @@ class DragonTools(commands.Cog):
         self.config.register_guild(**default_guild)
 
     @commands.command()
-    @commands.is_owner()
+    @commands.mod()
     async def modstats(self, ctx):
         modstats = await self.config.moderation()
         stats = ""
@@ -30,7 +30,7 @@ class DragonTools(commands.Cog):
         await ctx.send(modstats)
 
     @commands.command(alias=["verbalwarn"])
-    @commands.is_mod_or_superior()
+    @commands.mod()
     async def vwarn(self, ctx, user: discord.Member, *, reason):
         """Issue a verbal warning to a user."""
         await ctx.send(f"{user.mention} has been issued a verbal warning for {reason}")
