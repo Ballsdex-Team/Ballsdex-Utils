@@ -14,7 +14,7 @@ class DragonTools(commands.Cog):
         default = {
             "moderation": {}
         }
-        self.config.register(**default)
+        self.config.register_global(**default)
 
     @commands.command()
     @commands.is_owner()
