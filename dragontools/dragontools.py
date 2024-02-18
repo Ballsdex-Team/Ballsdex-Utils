@@ -4,6 +4,8 @@ from redbot.core import commands, app_commands, Config
 
 from discord.ui import Button, Modal, TextInput, View
 
+from datetime import datetime
+
 
 
 class DragonTools(commands.Cog):
@@ -41,7 +43,7 @@ class DragonTools(commands.Cog):
         async with self.config.guild(ctx.guild).verbalwarning() as verbalwarning:
             if str(user.id) not in verbalwarning:
                 verbalwarning[str(user.id)] = []
-            case = {"reason": reason, "mod": ctx.author.id, "time": ctx.message.created_at}
+            case = {"reason": reason, "mod": ctx.author.id, "time": ctx.message.created_at.timestamp()}
             verbalwarning[str(user.id)].append(case)
         await ctx.send(msg)
 
@@ -55,7 +57,7 @@ class DragonTools(commands.Cog):
         warnings = ""
         for case in verbalwarning[str(user.id)]:
             mod = ctx.guild.get_member(case["mod"])
-            warnings += f"**{case['time']}** - {case['reason']} - {mod.mention}\n"
+            warnings += f"**{datetime.fromtimestamp(case['time'])}** - {case['reason']} - {mod.mention}\n"
         await ctx.send(warnings)
         
 
