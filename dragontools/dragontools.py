@@ -14,7 +14,9 @@ class DragonTools(commands.Cog):
         default = {
             "moderation": {}
         }
+        default_guild = {"verbalwarning": {}}
         self.config.register_global(**default)
+        self.config.register_guild(**default_guild)
 
     @commands.command()
     @commands.is_owner()
@@ -26,6 +28,32 @@ class DragonTools(commands.Cog):
             for key, value in mod.items():
                 stats += f"{key}: {value}\n"
         await ctx.send(modstats)
+
+    @commands.command(alias=["verbalwarn"])
+    @commands.is_mod_or_superior()
+    async def vwarn(self, ctx, user: discord.Member, *, reason):
+        """Issue a verbal warning to a user."""
+        await ctx.send(f"{user.mention} has been issued a verbal warning for {reason}")
+        await user.send(f"You have been given a verbal warning in {ctx.guild.name} for {reason}.\nPlease take this as a warning and ensure you follow the rules in the future. If you have any questions or concerns, please reach out to a moderator or admin. Thank you.")
+        async with self.config.guild(ctx.guild).verbalwarning() as verbalwarning:
+            if str(user.id) not in verbalwarning:
+                verbalwarning[str(user.id)] = []
+            case = {"reason": reason, "mod": ctx.author.id, "time": ctx.message.created_at}
+            verbalwarning[str(user.id)].append(case)
+
+    @commands.command()
+    @commands.is_mod_or_superior()
+    async def listvwarns(self, ctx, user: discord.Member):
+        """List all verbal warnings for a user."""
+        verbalwarning = await self.config.guild(ctx.guild).verbalwarning()
+        if str(user.id) not in verbalwarning:
+            return await ctx.send(f"{user.mention} has no verbal warnings.")
+        warnings = ""
+        for case in verbalwarning[str(user.id)]:
+            mod = ctx.guild.get_member(case["mod"])
+            warnings += f"**{case['time']}** - {case['reason']} - {mod.mention}\n"
+        await ctx.send(warnings)
+        
 
 
 class ReportModal(Modal, title=f"Unban Appeal"):
