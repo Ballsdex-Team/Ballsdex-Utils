@@ -19,7 +19,7 @@ class DragonTools(commands.Cog):
         self.config.register_guild(**default_guild)
 
     @commands.command()
-    @commands.mod()
+    @commands.is_owner()
     async def modstats(self, ctx):
         modstats = await self.config.moderation()
         stats = ""
@@ -42,7 +42,7 @@ class DragonTools(commands.Cog):
             verbalwarning[str(user.id)].append(case)
 
     @commands.command()
-    @commands.is_mod_or_superior()
+    @commands.mod()
     async def listvwarns(self, ctx, user: discord.Member):
         """List all verbal warnings for a user."""
         verbalwarning = await self.config.guild(ctx.guild).verbalwarning()
