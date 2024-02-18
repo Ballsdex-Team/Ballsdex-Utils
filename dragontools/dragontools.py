@@ -1,6 +1,8 @@
 import discord
 
 from redbot.core import commands, app_commands, Config
+from redbot.core.utils.chat_formatting import pagify
+from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
 
 from discord.ui import Button, Modal, TextInput, View
 
@@ -58,7 +60,12 @@ class DragonTools(commands.Cog):
         for case in verbalwarning[str(user.id)]:
             mod = ctx.guild.get_member(case["mod"])
             warnings += f"**{datetime.fromtimestamp(case['time'])}** - {case['reason']} - {mod.mention}\n"
-        await ctx.send(warnings)
+        embeds = []
+        for page in pagify(warnings):
+            embed = discord.Embed(title=f"Verbal Warnings for {user}", description=page, color=discord.Color.red())
+            embeds.append(embed)
+
+        await menu(ctx, embeds, DEFAULT_CONTROLS)
         
 
 
