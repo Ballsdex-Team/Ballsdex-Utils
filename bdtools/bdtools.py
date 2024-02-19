@@ -29,7 +29,6 @@ from ballsdex.core.utils.transformers import BallEnabledTransform
 
 from discord.ext import tasks
 
-URL_REGEX = re.compile(r"(http[s]?:\/\/[^\"\']*\.(?:png|jpg|jpeg))")
 ID_REGEX = re.compile("\d{17,20}")
 ROLE_IDS = {
     "ticket": 1059622470677704754,
