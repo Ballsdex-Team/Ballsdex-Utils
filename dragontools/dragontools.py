@@ -69,7 +69,7 @@ class DragonTools(commands.Cog):
         
 
 
-class ReportModal(Modal, title=f"Unban Appeal"):
+class ReportModal(Modal, title=f"Report User"):
     reason = TextInput(
         label="Reason",
         style=discord.TextStyle.short,
