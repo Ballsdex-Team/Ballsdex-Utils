@@ -33,7 +33,7 @@ class DragonTools(commands.Cog):
                 stats += f"{key}: {value}\n"
         await ctx.send(modstats)
 
-    @commands.command(alias=["verbalwarn"])
+    @commands.command(aliases=["verbalwarn"])
     @commands.mod()
     async def vwarn(self, ctx, user: discord.Member, *, reason):
         """Issue a verbal warning to a user."""
