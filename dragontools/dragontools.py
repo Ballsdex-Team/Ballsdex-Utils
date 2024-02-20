@@ -89,7 +89,7 @@ class DragonTools(commands.Cog):
             guild=ctx.guild,
             mod=ctx.author,
             event="Verbal Warning",
-            reason=f"{user.mention} ({ctx.author.id}) has been given a verbal warning for following reason:\n{reason}"
+            reason=f"{user.mention} ({ctx.author.id}) has been given a verbal warning for following reason: {reason}"
         )
         await ctx.send(msg)
 
