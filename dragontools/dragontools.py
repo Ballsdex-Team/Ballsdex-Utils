@@ -16,11 +16,49 @@ class DragonTools(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
         default = {
-            "moderation": {}
+            "moderation": {},
+            "log_channel": None
         }
         default_guild = {"verbalwarning": {}}
         self.config.register_global(**default)
         self.config.register_guild(**default_guild)
+
+    async def maybe_send_logs(
+        self,
+        guild: discord.Guild,
+        mod: Union[discord.User, discord.Member],
+        event: str,
+        reason: str,
+    ) -> None:
+        """Sends a message to the log channel if it exists."""
+        log_channel_id = await self.config.guild(guild).log_channel()
+        if log_channel_id is None:
+            return
+        log_channel = guild.get_channel(log_channel_id)
+        if log_channel is None:
+            return
+        embed = discord.Embed(
+            title=f"{event}",
+            description=f"{reason}",
+        )
+        embed.set_author(name=str(mod), icon_url=mod.avatar.url)
+        await log_channel.send(embed=embed)
+
+    @commands.admin_or_permissions(manage_guild=True)
+    @commands.guild_only()
+    @commands.group(name="dragonset")
+    async def dragonset_group(self, ctx):
+        pass
+
+    @commands.admin_or_permissions(manage_guild=True)
+    @commands.guild_only()
+    @dragonset_group.command(name="logchannel")
+    async def dragonset_logchannel(
+        self, ctx: commands.Context, channel: discord.TextChannel
+    ):
+        """Set the log channel for the server."""
+        await self.config.guild(ctx.guild).log_channel.set(channel.id)
+        await ctx.send(f"Log channel has been set to {channel.mention}.")
 
     @commands.command()
     @commands.is_owner()
@@ -47,6 +85,12 @@ class DragonTools(commands.Cog):
                 verbalwarning[str(user.id)] = []
             case = {"reason": reason, "mod": ctx.author.id, "time": ctx.message.created_at.timestamp()}
             verbalwarning[str(user.id)].append(case)
+        await self.maybe_send_logs(
+            guild=ctx.guild,
+            mod=ctx.author,
+            event="Verbal Warning",
+            reason=f"{user.mention} ({ctx.author.id}) has been given a verbal warning for following reason:\n{reason}"
+        )
         await ctx.send(msg)
 
     @commands.command()
