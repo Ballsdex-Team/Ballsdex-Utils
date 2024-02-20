@@ -3,7 +3,7 @@ import discord
 from redbot.core import commands, app_commands, Config
 from redbot.core.utils.chat_formatting import pagify
 from redbot.core.utils.menus import menu, DEFAULT_CONTROLS
-
+from typing import Union
 from discord.ui import Button, Modal, TextInput, View
 
 from datetime import datetime
