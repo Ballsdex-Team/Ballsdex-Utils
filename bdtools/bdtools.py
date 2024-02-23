@@ -686,8 +686,8 @@ class BDTools(commands.Cog):
             await self.handle_req(message)
             return
 
-        if message.channel.id != 1210632184747135028:  # Art channel.
-            return
+        #if message.channel.id != 1210632184747135028:  # Art channel.
+        #    return
         if any(
             # Ballsdex and Proto helper bot, bots
             role.id in [1049119096517705762, 1091077320292438149, 1049188813508980806]
