@@ -682,11 +682,11 @@ class BDTools(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """Add a reaction to messages with attachments or links for art contest."""
-        if message.channel.id == 1184084842405707828:
+        if message.channel.id == 1210632184747135028:
             await self.handle_req(message)
             return
 
-        if message.channel.id != 1177735598275035157:  # Art channel.
+        if message.channel.id != 1210632184747135028:  # Art channel.
             return
         if any(
             # Ballsdex and Proto helper bot, bots
