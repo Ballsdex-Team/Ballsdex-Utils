@@ -81,7 +81,7 @@ class BDTools(commands.Cog):
         special_ignore = await self.config.guild_from_id(1049118743101452329).ignore_collector()
         maxi = await self.config.guild_from_id(1049118743101452329).max()
         mini = await self.config.guild_from_id(1049118743101452329).min()
-        balls = await BallInstance.filter(special__id=13)
+        balls = await BallInstance.filter(special__id=13).prefetch_related("player", "ball")
         for ball in balls:
             if ball.player.discord_id in special_ignore:
                 continue
@@ -107,7 +107,7 @@ class BDTools(commands.Cog):
         #     ).collector_balls() as collector_balls:
         #         for ball in to_delete[member]:
         #             del collector_balls[str(ball)]
-        diamond_balls = await BallInstance.filter(special__id=19)
+        diamond_balls = await BallInstance.filter(special__id=19).prefetch_related("player", "ball")
         special_ignore = await self.config.guild_from_id(1049118743101452329).ignore_diamond()
         diamond_max = await self.config.guild_from_id(1049118743101452329).diamond_max()
         diamond_min = await self.config.guild_from_id(1049118743101452329).diamond_min()
