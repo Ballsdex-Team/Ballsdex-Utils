@@ -66,49 +66,68 @@ class BDTools(commands.Cog):
             max=5000,
             min=250,
             pinned_thread=None,
+            ignore_collector=[],
+            ignore_diamond=[],
+            diamond_max=60,
+            diamond_min=10,
         )
         self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
         asyncio.create_task(self.check_collectors())
 
     async def check_collectors(self):
-        members = await self.config.all_users()
+        # members = await self.config.all_users()
         to_delete = {}
+        special_ignore = await self.config.guild_from_id(1049118743101452329).ignore_collector()
         maxi = await self.config.guild_from_id(1049118743101452329).max()
         mini = await self.config.guild_from_id(1049118743101452329).min()
-        for member in members:
-            user = self.bot.get_user(member)
-            for ball in members[member]["collector_balls"]:
-                if member not in to_delete:
-                    to_delete[member] = []
-                try:
-                    ball = await BallInstance.get(
-                        pk=members[member]["collector_balls"][ball]
-                    ).prefetch_related("ball")
-                except:
-                    to_delete[member].append(ball)
-                    continue
-                rarity = ball.ball.rarity
+        balls = await BallInstance.filter(special__id=13)
+        for ball in balls:
+            if ball.player.discord_id in special_ignore:
+                continue
+            user = self.bot.get_user(ball.player.discord_id)
+            rarity = ball.ball.rarity
 
-                needed_count = self.interpolate_value(maxi, mini, rarity)
-                needed_count = self.round_to_50(needed_count)
-                count = await BallInstance.filter(
-                    ball=ball.ball, player__discord_id=member
-                ).count()
-                if count >= needed_count:
-                    continue
-                await ball.delete()
-                if user:
-                    await user.send(
-                        f"Your {ball.ball.country} collector ball has been deleted because you no longer have enough balls to maintain it."
-                    )
-                to_delete[member].append(ball)
-        for member in to_delete:
-            async with self.config.user_from_id(
-                member
-            ).collector_balls() as collector_balls:
-                for ball in to_delete[member]:
-                    del collector_balls[str(ball)]
+            needed_count = self.interpolate_value(maxi, mini, rarity)
+            needed_count = self.round_to_50(needed_count)
+            count = await BallInstance.filter(
+                ball=ball.ball, player__discord_id=ball.player.discord_id
+            ).count()
+            if count >= needed_count:
+                continue
+            await ball.delete()
+            if user:
+                await user.send(
+                    f"Your {ball.ball.country} collector ball has been deleted because you no longer have enough balls to maintain it."
+                )
+            # to_delete[member].append(ball)
+        # for member in to_delete:
+        #     async with self.config.user_from_id(
+        #         member
+        #     ).collector_balls() as collector_balls:
+        #         for ball in to_delete[member]:
+        #             del collector_balls[str(ball)]
+        diamond_balls = await BallInstance.filter(special__id=19)
+        special_ignore = await self.config.guild_from_id(1049118743101452329).ignore_diamond()
+        diamond_max = await self.config.guild_from_id(1049118743101452329).diamond_max()
+        diamond_min = await self.config.guild_from_id(1049118743101452329).diamond_min()
+        for ball in diamond_balls:
+            if ball.player.discord_id in special_ignore:
+                continue
+            user = self.bot.get_user(ball.player.discord_id)
+            rarity = ball.ball.rarity
+            needed_count = self.interpolate_value(diamond_max, diamond_min, rarity)
+            needed_count = self.round_to_5(needed_count)
+            count = await BallInstance.filter(
+                ball=ball.ball, player__discord_id=ball.player.discord_id, shiny=True
+            ).count()
+            if count >= needed_count:
+                continue
+            await ball.delete()
+            if user:
+                await user.send(
+                    f"Your {ball.ball.country} diamond ball has been deleted because you no longer have enough shiny balls to maintain it."
+                )
 
         await asyncio.sleep(21600)
 
@@ -251,6 +270,14 @@ class BDTools(commands.Cog):
                 message=f"{ctx.channel.mention} has been locked.",
             )
 
+    # @commands.is_owner()
+    # @commands.command()
+    # async def accept(self, ctx, *, reason: str):
+    #     """Accept a suggestion"""
+        
+    #     if type(ctx.channel) is not discord.Tread:
+    #         return await ctx.send("This is not a suggestion thread.")
+
     # --- Slash Commands ---
     @app_commands.command(name="clear-marketplace")
     @app_commands.guilds(discord.Object(id=1049118743101452329))
@@ -338,6 +365,9 @@ class BDTools(commands.Cog):
 
     def round_to_50(self, x):
         return int(round(x / 50.0)) * 50
+    
+    def round_to_5(self, x):
+        return int(round(x / 5.0)) * 5
 
     def interpolate_value(self, maximum, minimum, x):
         x1, y1 = 0.05, minimum
@@ -363,6 +393,10 @@ class BDTools(commands.Cog):
         ball: Ball
             The ball to create.
         """
+        if not ball:
+            return await interaction.response.send_message(
+                "Ball not found.", ephemeral=True
+            )
         if not ball.enabled:
             return await interaction.response.send_message(
                 "Cannot use this ball", ephemeral=True
@@ -398,6 +432,45 @@ class BDTools(commands.Cog):
                 special=await Special.get(name="Collector"),
             )
             collector_balls[ball.country] = ball_obj.pk
+
+    @app_commands.command(name="diamond")
+    @app_commands.guilds(discord.Object(id=1049118743101452329))
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 600, key=lambda i: i.user.id)
+    async def slash_diamond(
+        self,
+        interaction: discord.Interaction,
+        ball: BallEnabledTransform,
+    ):
+        """Create a diamond ball."""
+        if not ball:
+            return await interaction.response.send_message(
+                "Ball not found.", ephemeral=True
+            )
+        if not ball.enabled:
+            return await interaction.response.send_message(
+                "Cannot use this ball", ephemeral=True
+            )
+        count = await BallInstance.filter(
+            ball=ball, player__discord_id=interaction.user.id, shiny=True
+        ).count()
+        maxi = await self.config.guild(interaction.guild).diamond_max()
+        mini = await self.config.guild(interaction.guild).diamond_min()
+        needed_count = self.interpolate_value(maxi, mini, ball.rarity)
+        needed_count = self.round_to_5(needed_count)
+        if count < needed_count:
+            return await interaction.response.send_message(
+                f"You need {needed_count} shiny {ball.country} to create a diamond ball. You currently have {count}.",
+                ephemeral=True,
+            )
+        ball_obj = await BallInstance.create(
+            ball=ball,
+            player=await Player.get(discord_id=interaction.user.id),
+            special=await Special.get(name="Diamond"),
+        )
+        await interaction.response.send_message(
+            f"Successfully created a diamond {ball.country} ball.", ephemeral=True
+        )
 
     blacklist_group = app_commands.Group(
         name="blacklist",
