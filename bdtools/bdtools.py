@@ -401,6 +401,14 @@ class BDTools(commands.Cog):
             return await interaction.response.send_message(
                 "Cannot use this ball", ephemeral=True
             )
+        already_exists = await BallInstance.filter(
+            ball=ball, player__discord_id=interaction.user.id, special__name="Collector"
+        ).exists()
+        if already_exists:
+            return await interaction.response.send_message(
+                f"You already have a {ball.country} collector ball.",
+                ephemeral=True,
+            )
         count = await BallInstance.filter(
             ball=ball, player__discord_id=interaction.user.id
         ).count()
@@ -450,6 +458,13 @@ class BDTools(commands.Cog):
         if not ball.enabled:
             return await interaction.response.send_message(
                 "Cannot use this ball", ephemeral=True
+            )
+        already_exists = await BallInstance.filter(
+            ball=ball, player__discord_id=interaction.user.id, special__name="Diamond"
+        ).exists()
+        if already_exists:
+            return await interaction.response.send_message(
+                f"You already have a diamond {ball.country} ball.", ephemeral=True
             )
         count = await BallInstance.filter(
             ball=ball, player__discord_id=interaction.user.id, shiny=True
