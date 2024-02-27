@@ -363,6 +363,48 @@ class BDTools(commands.Cog):
         )
         await interaction.followup.send("All done!")
 
+    @commands.is_owner()
+    @commands.command()
+    async def accept(self, ctx):
+        """Accept a suggestion"""
+        
+        if type(ctx.channel) is not discord.Tread:
+            return await ctx.send("This is not a suggestion thread.")
+        if ctx.channel.parent_id != 1049164568066281472:
+            return await ctx.send("This is not in suggestions.")
+        channel = ctx.guild.get_channel(1049164568066281472)
+        tag = discord.utils.get(channel.available_tags, name="accepted")
+        await ctx.channel.edit(locked=True, applied_tags=[tag])
+
+    @commands.is_owner()
+    @commands.command()
+    async def deny(self, ctx, *, reason: str):
+        """Deny a suggestion"""
+        
+        if type(ctx.channel) is not discord.Tread:
+            return await ctx.send("This is not a suggestion thread.")
+        if ctx.channel.parent_id != 1049164568066281472:
+            return await ctx.send("This is not in suggestions.")
+        channel = ctx.guild.get_channel(1049164568066281472)
+        tag = discord.utils.get(channel.available_tags, name="denied")
+        await ctx.channel.edit(locked=True, applied_tags=[tag])
+        await ctx.send(f"Denied for the following reason: {reason}")
+
+    @commands.is_owner()
+    @commands.command()
+    async def implemented(self, ctx):
+        """Mark a suggestion as implemented"""
+        
+        if type(ctx.channel) is not discord.Tread:
+            return await ctx.send("This is not a suggestion thread.")
+        if ctx.channel.parent_id != 1049164568066281472:
+            return await ctx.send("This is not in suggestions.")
+        channel = ctx.guild.get_channel(1049164568066281472)
+        tag = discord.utils.get(channel.available_tags, name="implemented")
+        await ctx.channel.edit(locked=True, applied_tags=[tag])
+        await ctx.send("Marked as implemented.")
+
+
     def round_to_50(self, x):
         return int(round(x / 50.0)) * 50
     
