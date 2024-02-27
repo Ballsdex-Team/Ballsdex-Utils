@@ -401,7 +401,7 @@ class BDTools(commands.Cog):
             return await ctx.send("This is not in suggestions.")
         channel = ctx.guild.get_channel(1049164568066281472)
         tag = discord.utils.get(channel.available_tags, name="implemented")
-        await ctx.channel.edit(locked=True, applied_tags=[tag])
+        await ctx.channel.edit(locked=True, applied_tags=[tag], archived=True)
         await ctx.send("Marked as implemented.")
 
 
