@@ -368,7 +368,7 @@ class BDTools(commands.Cog):
     async def accept(self, ctx):
         """Accept a suggestion"""
         
-        if type(ctx.channel) is not discord.Tread:
+        if type(ctx.channel) is not discord.Thread:
             return await ctx.send("This is not a suggestion thread.")
         if ctx.channel.parent_id != 1049164568066281472:
             return await ctx.send("This is not in suggestions.")
@@ -381,7 +381,7 @@ class BDTools(commands.Cog):
     async def deny(self, ctx, *, reason: str):
         """Deny a suggestion"""
         
-        if type(ctx.channel) is not discord.Tread:
+        if type(ctx.channel) is not discord.Thread:
             return await ctx.send("This is not a suggestion thread.")
         if ctx.channel.parent_id != 1049164568066281472:
             return await ctx.send("This is not in suggestions.")
@@ -395,7 +395,7 @@ class BDTools(commands.Cog):
     async def implemented(self, ctx):
         """Mark a suggestion as implemented"""
         
-        if type(ctx.channel) is not discord.Tread:
+        if type(ctx.channel) is not discord.Thread:
             return await ctx.send("This is not a suggestion thread.")
         if ctx.channel.parent_id != 1049164568066281472:
             return await ctx.send("This is not in suggestions.")
