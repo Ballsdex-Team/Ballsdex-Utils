@@ -374,7 +374,7 @@ class BDTools(commands.Cog):
             return await ctx.send("This is not in suggestions.")
         channel = ctx.guild.get_channel(1049164568066281472)
         tag = discord.utils.get(channel.available_tags, name="accepted")
-        await ctx.channel.edit(locked=True, applied_tags=[tag])
+        await ctx.channel.edit(locked=True, applied_tags=[tag] + ctx.channel.applied_tags)
 
     @commands.is_owner()
     @commands.command()
@@ -387,7 +387,7 @@ class BDTools(commands.Cog):
             return await ctx.send("This is not in suggestions.")
         channel = ctx.guild.get_channel(1049164568066281472)
         tag = discord.utils.get(channel.available_tags, name="denied")
-        await ctx.channel.edit(locked=True, applied_tags=[tag])
+        await ctx.channel.edit(locked=True, applied_tags=[tag] + ctx.channel.applied_tags)
         await ctx.send(f"Denied for the following reason: {reason}")
 
     @commands.is_owner()
@@ -401,7 +401,11 @@ class BDTools(commands.Cog):
             return await ctx.send("This is not in suggestions.")
         channel = ctx.guild.get_channel(1049164568066281472)
         tag = discord.utils.get(channel.available_tags, name="implemented")
-        await ctx.channel.edit(locked=True, applied_tags=[tag], archived=True)
+        tags = ctx.channel.applied_tags
+        # remove accepted tag
+        if discord.utils.get(tags, name="accepted"):
+            tags.remove(discord.utils.get(tags, name="accepted"))
+        await ctx.channel.edit(locked=True, applied_tags=[tag] + tags, archived=True)
         await ctx.send("Marked as implemented.")
 
 
