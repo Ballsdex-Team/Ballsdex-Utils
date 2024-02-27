@@ -83,7 +83,7 @@ class BDTools(commands.Cog):
         mini = await self.config.guild_from_id(1049118743101452329).min()
         balls = await BallInstance.filter(special__id=13).prefetch_related("player", "ball")
         for ball in balls:
-            if (ball.player.discord_id, ball.ball.id) in special_ignore:
+            if [ball.player.discord_id, ball.ball.id] in special_ignore:
                 continue
             user = self.bot.get_user(ball.player.discord_id)
             rarity = ball.ball.rarity
@@ -112,7 +112,7 @@ class BDTools(commands.Cog):
         diamond_max = await self.config.guild_from_id(1049118743101452329).diamond_max()
         diamond_min = await self.config.guild_from_id(1049118743101452329).diamond_min()
         for ball in diamond_balls:
-            if (ball.player.discord_id, ball.ball.id) in special_ignore:
+            if [ball.player.discord_id, ball.ball.id] in special_ignore:
                 continue
             user = self.bot.get_user(ball.player.discord_id)
             rarity = ball.ball.rarity

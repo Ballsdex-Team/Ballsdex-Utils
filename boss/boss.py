@@ -552,7 +552,7 @@ class Boss(commands.Cog):
         """Show the leaderboard for boss battles.
 
         """
-        await interaction.response.defer(ephermeral=True)
+        await interaction.response.defer(ephemeral=True)
         key = key.value
         users = await self.config.all_users()
         sorted_users = sorted(users, key=lambda x: users[x][key], reverse=True)
