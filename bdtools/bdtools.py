@@ -387,7 +387,7 @@ class BDTools(commands.Cog):
             return await ctx.send("This is not in suggestions.")
         channel = ctx.guild.get_channel(1049164568066281472)
         tag = discord.utils.get(channel.available_tags, name="denied")
-        await ctx.channel.edit(locked=True, applied_tags=[tag] + ctx.channel.applied_tags)
+        await ctx.channel.edit(locked=True, applied_tags=[tag] + ctx.channel.applied_tags, archived=True)
         await ctx.send(f"Denied for the following reason: {reason}")
 
     @commands.is_owner()
