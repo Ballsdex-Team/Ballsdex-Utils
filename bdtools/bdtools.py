@@ -385,10 +385,10 @@ class BDTools(commands.Cog):
             return await ctx.send("This is not a suggestion thread.")
         if ctx.channel.parent_id != 1049164568066281472:
             return await ctx.send("This is not in suggestions.")
+        await ctx.send(f"Denied for the following reason: {reason}")
         channel = ctx.guild.get_channel(1049164568066281472)
         tag = discord.utils.get(channel.available_tags, name="denied")
         await ctx.channel.edit(locked=True, applied_tags=[tag] + ctx.channel.applied_tags, archived=True)
-        await ctx.send(f"Denied for the following reason: {reason}")
 
     @commands.is_owner()
     @commands.command()
@@ -400,13 +400,13 @@ class BDTools(commands.Cog):
         if ctx.channel.parent_id != 1049164568066281472:
             return await ctx.send("This is not in suggestions.")
         channel = ctx.guild.get_channel(1049164568066281472)
+        await ctx.send("Marked as implemented.")
         tag = discord.utils.get(channel.available_tags, name="implemented")
         tags = ctx.channel.applied_tags
         # remove accepted tag
         if discord.utils.get(tags, name="accepted"):
             tags.remove(discord.utils.get(tags, name="accepted"))
         await ctx.channel.edit(locked=True, applied_tags=[tag] + tags, archived=True)
-        await ctx.send("Marked as implemented.")
 
 
     def round_to_50(self, x):
