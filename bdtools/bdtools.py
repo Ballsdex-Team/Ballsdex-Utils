@@ -819,6 +819,8 @@ class BDTools(commands.Cog):
         if message.channel.id == 1184084842405707828:
             await self.handle_req(message)
             return
+        if message.channel.id == 1092534995605782678:
+            await message.pin(reason="First message in market thread.")
         if message.channel.id != 1210632184747135028:  # Art channel.
             return
         if any(
