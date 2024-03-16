@@ -819,11 +819,6 @@ class BDTools(commands.Cog):
         if message.channel.id == 1184084842405707828:
             await self.handle_req(message)
             return
-        # if message is first message in a thread, pin it
-        if isinstance(message.channel, discord.Thread) and message.channel.last_message_id is None:
-            await message.pin()
-
-
 
         if message.channel.id != 1210632184747135028:  # Art channel.
             return
@@ -834,6 +829,15 @@ class BDTools(commands.Cog):
         ):
             return
         await message.add_reaction("👍")
+
+    @commands.Cog.listener()
+    async def on_thread_create(self, thread):
+        if thread.last_message_id is None:
+            return
+        msg = await thread.get_partial_message(thread.last_message_id)
+        if msg:
+            await msg.pin()
+
 
 
 class UnbanPrompt(Modal, title=f"Unban Appeal"):
