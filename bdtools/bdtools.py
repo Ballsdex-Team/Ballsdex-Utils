@@ -819,8 +819,10 @@ class BDTools(commands.Cog):
         if message.channel.id == 1184084842405707828:
             await self.handle_req(message)
             return
-        if message.channel.id == 1092534995605782678:
-            await message.pin(reason="First message in market thread.")
+        # if message is first message in a thread, add a reaction
+        if isinstance(message.channel, discord.Thread) and message.id == message.channel.last_message_id:
+            await message.pin()
+
         if message.channel.id != 1210632184747135028:  # Art channel.
             return
         if any(
