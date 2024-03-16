@@ -832,13 +832,12 @@ class BDTools(commands.Cog):
 
     @commands.Cog.listener()
     async def on_thread_create(self, thread):
-        if thread.last_message_id is None:
+        # get first message in thread
+        first_message = thread.get_partial_message(thread.id)
+        if first_message is None:
             return
-        msg = await thread.get_partial_message(thread.last_message_id)
-        if msg:
-            await msg.pin()
-
-
+        # pin
+        await first_message.pin()
 
 class UnbanPrompt(Modal, title=f"Unban Appeal"):
     reason = TextInput(
