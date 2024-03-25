@@ -51,6 +51,7 @@ class BlacklistChoices(enum.Enum):
     art = 5
 
 
+
 class BDTools(commands.Cog):
     """Tools used within the Ballsdex server"""
 
@@ -70,6 +71,7 @@ class BDTools(commands.Cog):
             ignore_diamond=[],
             diamond_max=60,
             diamond_min=10,
+            submissions={},
         )
         self.config.register_user(collector_balls={})
         self.bot.add_view(UnbanView(None, bot, self))
@@ -362,6 +364,58 @@ class BDTools(commands.Cog):
             applied_tags=[tag],
         )
         await interaction.followup.send("All done!")
+
+    @app_commands.command(name="submit-artwork")
+    @app_commands.guilds(discord.Object(id=1049118743101452329))
+    @app_commands.choices(
+        submission_type=[
+            app_commands.Choice(name="Boss", value="boss"),
+        ]
+    )
+    @app_commands.guild_only()
+    async def slash_submit_art(
+        self,
+        interaction: discord.Interaction,
+        submission_type,
+        artwork: discord.Attachment,
+    ):
+        """Submit artwork to the server.
+
+        Parameters
+        -----------
+        submission_type: str
+            The type of submission.
+        artwork: discord.Attachment
+            The artwork to submit.
+        """
+        if interaction.author.id != 95932766180343808:
+            return await interaction.response.send_message(
+                "You cannot use this command.", ephemeral=True
+            )
+        if submission_type == "boss":
+            channel = interaction.guild.get_channel(1054624927879266404)
+            message = await channel.send(
+                f"{interaction.user.mention} has submitted a boss artwork.",
+                file=await artwork.to_file(),
+            )
+            async with self.config.guild(interaction.guild).submissions() as submissions:
+                if submission_type not in submissions:
+                    submissions[submission_type] = {}
+                if str(interaction.author.id) in submissions[submission_type]:
+                    return await interaction.response.send_message(
+                        "You have already submitted an artwork.", ephemeral=True
+                    )
+                submissions[submission_type][str(interaction.author.id)] = {
+                    "message": message.id,
+                    "attachment": artwork.url,
+                }
+            await interaction.response.send_message(
+                "Your artwork has been submitted.", ephemeral=True
+            )
+        else:
+            await interaction.response.send_message(
+                "Invalid submission type.", ephemeral=True
+            )
 
     @commands.is_owner()
     @commands.command()
