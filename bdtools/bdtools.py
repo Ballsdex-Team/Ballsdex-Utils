@@ -376,7 +376,7 @@ class BDTools(commands.Cog):
     async def slash_submit_art(
         self,
         interaction: discord.Interaction,
-        submission_type,
+        submission_type: str,
         artwork: discord.Attachment,
     ):
         """Submit artwork to the server.
