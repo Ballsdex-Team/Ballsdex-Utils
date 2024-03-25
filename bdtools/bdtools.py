@@ -388,27 +388,27 @@ class BDTools(commands.Cog):
         artwork: discord.Attachment
             The artwork to submit.
         """
-        if interaction.author.id != 95932766180343808:
+        if interaction.user.id != 95932766180343808:
             return await interaction.response.send_message(
                 "You cannot use this command.", ephemeral=True
             )
         if submission_type == "boss":
             channel = interaction.guild.get_channel(1054624927879266404)
-            message = await channel.send(
-                f"{interaction.user.mention} has submitted a boss artwork.",
-                file=await artwork.to_file(),
-            )
             async with self.config.guild(interaction.guild).submissions() as submissions:
                 if submission_type not in submissions:
                     submissions[submission_type] = {}
-                if str(interaction.author.id) in submissions[submission_type]:
+                if str(interaction.user.id) in submissions[submission_type]:
                     return await interaction.response.send_message(
                         "You have already submitted an artwork.", ephemeral=True
                     )
-                submissions[submission_type][str(interaction.author.id)] = {
+                message = await channel.send(
+                    file=await artwork.to_file(),
+                )
+                submissions[submission_type][str(interaction.user.id)] = {
                     "message": message.id,
                     "attachment": artwork.url,
                 }
+                await message.add_reaction("👍")
             await interaction.response.send_message(
                 "Your artwork has been submitted.", ephemeral=True
             )
