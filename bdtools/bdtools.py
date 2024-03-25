@@ -393,7 +393,7 @@ class BDTools(commands.Cog):
                 "You cannot use this command.", ephemeral=True
             )
         if submission_type == "boss":
-            channel = interaction.guild.get_channel(1054624927879266404)
+            channel = interaction.guild.get_channel(1221794533088559174)
             async with self.config.guild(interaction.guild).submissions() as submissions:
                 if submission_type not in submissions:
                     submissions[submission_type] = {}
