@@ -388,10 +388,6 @@ class BDTools(commands.Cog):
         artwork: discord.Attachment
             The artwork to submit.
         """
-        if interaction.user.id != 95932766180343808:
-            return await interaction.response.send_message(
-                "You cannot use this command.", ephemeral=True
-            )
         if submission_type == "boss":
             channel = interaction.guild.get_channel(1221794533088559174)
             async with self.config.guild(interaction.guild).submissions() as submissions:
